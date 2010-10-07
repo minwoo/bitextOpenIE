@@ -15,6 +15,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.log4j.Logger;
 
@@ -25,12 +26,13 @@ public class Parameter implements Serializable {
 
 	private transient Logger logger = Logger.getLogger(Parameter.class);
 
-	protected Alphabet inputDict;
-	protected Alphabet labelDict;
-	protected InvertedIndex paramIndex;
-	protected ArrayList<TIntIntHashMap> edgeIndex;
-	protected TDoubleArrayList weight = new TDoubleArrayList();
-	protected TDoubleArrayList count = new TDoubleArrayList();
+	protected Alphabet inputDict;	// dictionary (i.e. hashmap) for observed features (of both node and edge) 
+	protected Alphabet labelDict;	// dictionary (i.e. hashmap) for labeling 
+	protected InvertedIndex paramIndex;	// index for (y, x) pair where y is a label and x an input feature; see @InvertedIndex
+	protected int[][] edgeIndex;	// index for edge transition (of unitext CRF model), i.e. 1-order chain
+	
+	protected TDoubleArrayList weight = new TDoubleArrayList();	// weight (parameter) vector
+	protected TDoubleArrayList count = new TDoubleArrayList();	// empirical count vector; this would be moved outside of class
 
 	public Parameter () {
 		inputDict = new Alphabet();
@@ -93,24 +95,28 @@ public class Parameter implements Serializable {
 	
 	public void makeEdgeIndex () {
 		int N = sizeLabel();
-		edgeIndex = new ArrayList<TIntIntHashMap>();
+		edgeIndex = new int[N][N];
 		for (int i = 0; i < N; i++)
-			edgeIndex.add(new TIntIntHashMap());
+			Arrays.fill(edgeIndex[i], -1); // `-1' indicates null parameter
 		
 		for (int i = 0; i < N; i++) {
 			String labelStr = "@" + labelDict.getObject(i);
 			int featId = inputDict.lookup(labelStr, false);
 			TIntIntHashMap index = getIndex(featId);
 			for (int y : index.keys())
-				edgeIndex.get(y).put(i, index.get(y));
+				edgeIndex[y][i] = index.get(y);
 		}
 	}
 	
-	public TIntIntHashMap getEdgeIndex(int i) {
-		return edgeIndex.get(i);
+	public int[] getEdgeIndex (int i) {
+		return edgeIndex[i];
+	}
+	
+	public int[][] getEdgeIndex () {
+		return edgeIndex;
 	}
 
-	public TIntIntHashMap getIndex(int i) {
+	public TIntIntHashMap getIndex (int i) {
 		return paramIndex.getIndex(i);
 	}
 	

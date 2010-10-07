@@ -9,11 +9,8 @@ package openie.crf;
 
 import gnu.trove.map.hash.*;
 
-import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.zip.*;
-
 import org.apache.log4j.Logger;
 
 import openie.text.*;
@@ -31,8 +28,6 @@ public class MaxEnt extends CRF {
 	private double opt_eta = 1E-05;
 
 	private double[] weight;	// weight vector
-	private double[] count;		// empirical count
-	private double[] gradient; 	// used for batch learner
 	private double[] penalty;	// used for SGD-L1 
 	
 	public MaxEnt() {}
@@ -83,8 +78,6 @@ public class MaxEnt extends CRF {
 	
 	private final void runSGDL1 (UnitextCorpus trainSet) {
 		weight = param.getWeight();
-		count = param.getCount();
-		gradient = new double[weight.length];
 		penalty = new double[weight.length];
 		double[] prob = new double[param.sizeLabel()];
 		

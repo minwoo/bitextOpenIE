@@ -19,7 +19,6 @@ public class Test {
     public static void main(String[] args) {
 
         Logger logger = Logger.getLogger(Test.class);
-        logger.info("===" + Test.class.getName() + "===");
 
         // command line parsing
         CmdLineParser cmdParser = new CmdLineParser();
@@ -48,6 +47,7 @@ public class Test {
             
             // classifier
             CRF classifier = (CRF) Class.forName(classifierName).getConstructor(new Class[]{}).newInstance(new Object[]{});
+            logger.info("===" + classifier.getClass().getName() + "===");
             
             // training mode
             if (config.contains("train_file")) {
