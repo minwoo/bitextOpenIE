@@ -18,12 +18,6 @@ import java.rmi.dgc.VMID;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/**
- * mj.ml4nlp.type::Index.java
- *
- * @author minwoo
- * @date 2010. 2. 24.
- */
 public class InvertedIndex implements Serializable {
 
 	private static final long serialVersionUID = 1L;

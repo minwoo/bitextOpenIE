@@ -9,41 +9,30 @@ package openie.crf;
 
 import java.io.IOException;
 
-import openie.text.Corpus;
+import openie.text.Sequence;
+import openie.text.UnitextCorpus;
 import openie.text.SparseVector;
 import openie.util.Configure;
 
-public class bitextCRF extends CRF {
+public class BitextCRF extends CRF {
 
 	@Override
-	public void load(String filename) throws IOException,
-			ClassNotFoundException {
+	public int[] predict(Sequence example) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public void test(UnitextCorpus testSet, Configure option) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public int predict(SparseVector example) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void save(String filename) throws IOException {
+	public void train(UnitextCorpus trainSet, Configure option) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
-	public void test(Corpus testSet, Configure option) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void train(Corpus trainSet, Configure option) {
-		// TODO Auto-generated method stub
-		
-	}
 
 }

@@ -12,55 +12,53 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
-/**
- * mj.ml4nlp.type::ClassifyCorpus.java
- *
- * @author minwoo
- * @date 2010. 2. 24.
- */
-public class Corpus implements Serializable {
+public class UnitextCorpus {
 
-	private static final long serialVersionUID = 1L;
-	protected ArrayList<SparseVector> data;
+	protected ArrayList<Sequence> data;
 	protected Parameter param;
-	protected Alphabet inputDict;
-	protected Alphabet labelDict;
-	protected InvertedIndex paramIndex;
 	
-	public Corpus () {
-		data = new ArrayList<SparseVector>();
+	protected int numOfElement;
+	
+	public UnitextCorpus () {
+		data = new ArrayList<Sequence>();
 		param = new Parameter();
-		inputDict = param.getInputAlphabet();
-		labelDict = param.getLabelAlphabet();
-		paramIndex = param.getParamIndex();
+		numOfElement = 0;
 	}
 
-	public Corpus (Parameter param) {
-		data = new ArrayList<SparseVector>();
+	public UnitextCorpus (Parameter param) {
+		data = new ArrayList<Sequence>();
 		this.param = param;
-		inputDict = this.param.getInputAlphabet();
-		labelDict = this.param.getLabelAlphabet();
-		paramIndex = this.param.getParamIndex();
+		numOfElement = 0;
 	}
 	
 	public boolean readFile (String filename, boolean isUpdate) throws IOException {
 		FileReader fr = new FileReader(filename);
 		BufferedReader br = new BufferedReader(fr);
 		String line = null;
+		String prev_label = "";
 		
+		Sequence oneSentence = new Sequence();
 		while ((line = br.readLine()) != null) {
 			String[] tokens = line.split(" ", -1);
-			if (tokens.length < 2)
+			if (tokens.length < 2) { // smth strange; len(blank line) = 1
+				append(oneSentence);
+				oneSentence = new Sequence();
 				continue;
-			append(pack(tokens, isUpdate));
+			}
+			oneSentence.addElement(pack(tokens, isUpdate));
+			// todo: refactoring the following code for making edge (transition) feature index
+			param.indexingEdge(tokens[0], prev_label, 1.0, isUpdate);
+			prev_label = tokens[0];
 		}
 		br.close(); fr.close();
+		param.makeEdgeIndex();
 		
 		return true;
 	}
 	
-	public void append (SparseVector instance) {
+	public void append (Sequence instance) {
 		data.add(instance);
+		numOfElement += instance.size();
 	}
 	
 	private SparseVector pack (String[] tokens, boolean isUpdate) {
@@ -90,7 +88,7 @@ public class Corpus implements Serializable {
 		
 		return ret;
 	}
-	
+		
 	public void shuffle (java.util.Random r) {
 		Collections.shuffle(this.data, r);
 	}
@@ -99,7 +97,11 @@ public class Corpus implements Serializable {
 		return data.size();
 	}
 	
-	public Iterator<SparseVector> iterator () {
+	public int sizeElement () {
+		return numOfElement;
+	}
+	
+	public Iterator<Sequence> iterator () {
 		return data.iterator();
 	}
 }

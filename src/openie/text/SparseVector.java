@@ -9,12 +9,6 @@ package openie.text;
 
 import java.util.ArrayList;
 
-/**
- * mj.ml4nlp.type::ClassifyVector.java
- *
- * @author minwoo
- * @date 2010. 2. 24.
- */
 public class SparseVector {
 	
 	protected ArrayList<IntElement> input;

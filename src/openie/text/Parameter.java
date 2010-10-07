@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+
 import org.apache.log4j.Logger;
 
 public class Parameter implements Serializable {
@@ -26,6 +28,7 @@ public class Parameter implements Serializable {
 	protected Alphabet inputDict;
 	protected Alphabet labelDict;
 	protected InvertedIndex paramIndex;
+	protected ArrayList<TIntIntHashMap> edgeIndex;
 	protected TDoubleArrayList weight = new TDoubleArrayList();
 	protected TDoubleArrayList count = new TDoubleArrayList();
 
@@ -64,7 +67,7 @@ public class Parameter implements Serializable {
 		
 		return ret;
 	}
-	
+		
 	public int lookup (int labelId, int inputId, double value, boolean isUpdate) {
 		int fid = paramIndex.lookup(labelId, inputId, isUpdate);
 		
@@ -80,6 +83,31 @@ public class Parameter implements Serializable {
 		
 		assert(paramIndex.size() == weight.size());
 		return fid;
+	}
+	
+	public int indexingEdge (String label, String prevLabel, double value, boolean isUpdate) {
+		int labelId = labelDict.lookup(label, isUpdate);
+		int featId = inputDict.lookup("@" + prevLabel, isUpdate);
+		return lookup(labelId, featId, value, isUpdate);
+	}
+	
+	public void makeEdgeIndex () {
+		int N = sizeLabel();
+		edgeIndex = new ArrayList<TIntIntHashMap>();
+		for (int i = 0; i < N; i++)
+			edgeIndex.add(new TIntIntHashMap());
+		
+		for (int i = 0; i < N; i++) {
+			String labelStr = "@" + labelDict.getObject(i);
+			int featId = inputDict.lookup(labelStr, false);
+			TIntIntHashMap index = getIndex(featId);
+			for (int y : index.keys())
+				edgeIndex.get(y).put(i, index.get(y));
+		}
+	}
+	
+	public TIntIntHashMap getEdgeIndex(int i) {
+		return edgeIndex.get(i);
 	}
 
 	public TIntIntHashMap getIndex(int i) {

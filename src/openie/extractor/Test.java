@@ -32,7 +32,7 @@ public class Test {
         }
         catch (CmdLineParser.OptionException e) {
             logger.error(e.getMessage());
-            logger.error("Usage: java -cp ${CLASSPATH} mj.ml4nlp.classifier.Runner " +
+            logger.error("Usage: java -cp ${CLASSPATH} opeie.extractor.Test " +
                     "[-c,--config] config_file [{-v,--verbose}] [{-d,--debug}]");
             System.exit(2);
         }
@@ -44,14 +44,15 @@ public class Test {
         // running
         try {
             Configure config = new Configure(configFileName);
-            String classifierName = config.contains("class") ? config.getString("class") : "mj.ml4nlp.classifier.MaxEnt";
+            String classifierName = config.contains("class") ? config.getString("class") : "openie.crf.MaxEnt";
             
             // classifier
             CRF classifier = (CRF) Class.forName(classifierName).getConstructor(new Class[]{}).newInstance(new Object[]{});
             
             // training mode
             if (config.contains("train_file")) {
-                Corpus trainSet = new Corpus(classifier.getParam());
+            	classifier.setParam(new Parameter());
+                UnitextCorpus trainSet = new UnitextCorpus(classifier.getParam());
             	trainSet.readFile(config.getString("train_file"), true);
             	if (config.contains("train") && config.getBoolean("train")) 
             		classifier.train(trainSet, config);
@@ -62,9 +63,10 @@ public class Test {
             // test mode
             if (config.contains("test_file")) {
             	// model load
+            	classifier.setParam(new Parameter());
             	if (config.contains("model_file")) 
             		classifier.load(config.getString("model_file"));
-                Corpus testSet = new Corpus(classifier.getParam());
+                UnitextCorpus testSet = new UnitextCorpus(classifier.getParam());
             	testSet.readFile(config.getString("test_file"), false);
             	if (config.contains("test") && config.getBoolean("test")) 
             		classifier.test(testSet, config);

@@ -7,22 +7,30 @@
 
 package openie.crf;
 
-import gnu.trove.map.hash.*;
+import gnu.trove.map.hash.TIntIntHashMap;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.zip.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.log4j.Logger;
 
-import openie.text.*;
+import openie.text.Parameter;
+import openie.text.Sequence;
+import openie.text.UnitextCorpus;
+import openie.text.SparseVector;
 import openie.text.SparseVector.IntElement;
 import openie.util.Configure;
 
-public class MaxEnt extends CRF {
+public class UnitextCRF extends CRF {
 
-	private transient Logger logger = Logger.getLogger(MaxEnt.class);
+	private transient Logger logger = Logger.getLogger(UnitextCRF.class);
     
 	// learning options
 	private double opt_l1prior = 1;
@@ -34,22 +42,11 @@ public class MaxEnt extends CRF {
 	private double[] count;		// empirical count
 	private double[] gradient; 	// used for batch learner
 	private double[] penalty;	// used for SGD-L1 
-	
-	public MaxEnt() {}
 
-	public int predict (SparseVector elem) {
-		double[] prob = new double[param.sizeLabel()];
-		return argmax(elem, prob);
-	}
-	
 	@Override
 	public int[] predict (Sequence example) {
-		int[] pred = new int[example.size()];
-		for (int i = 0; i < pred.length; i++) {
-			double[] prob = new double[param.sizeLabel()];
-			pred[i] = argmax(example.at(i), prob);
-		}
-		return pred;
+		double[] prob = new double[example.size()];
+		return argmax(example, prob);
 	}
 	
 	@Override
@@ -58,9 +55,9 @@ public class MaxEnt extends CRF {
 		Iterator<Sequence> iter = testSet.iterator();
 		while (iter.hasNext()) {
 			Sequence instance = iter.next();
-			for (SparseVector elem : instance.getSeq()) {
-				int outcome = predict(elem);
-				if (outcome == elem.getLabel()) 
+			int[] outcome = predict(instance);
+			for (int i = 0; i < outcome.length; i++) {
+				if (outcome[i] == instance.at(i).getLabel()) 
 					nCorrect ++;
 			}
 		}
@@ -68,7 +65,7 @@ public class MaxEnt extends CRF {
 	}
 
 	@Override
-	public void train (UnitextCorpus trainSet, Configure option) {
+	public void train(UnitextCorpus trainSet, Configure option) {
 		if (option.contains("maxiter"))
 			this.opt_maxiter = option.getInteger("maxiter");
 		if (option.contains("l1prior"))
@@ -78,9 +75,58 @@ public class MaxEnt extends CRF {
 		if (option.contains("eta"))
 			this.opt_eta = option.getDouble("eta");
 		
-		runSGDL1(trainSet);
+		runSGDL1(trainSet);		
 	}
 	
+	private final double[][] computeNode (Sequence instance) {
+		double[][] nodeScore = new double[instance.size()+1][param.sizeLabel()];
+		for (int i = 0; i < nodeScore.length; i++) 
+			Arrays.fill(nodeScore[i], 1.0);
+		
+		double[] lambda = param.getWeight();
+		for (int i = 0; i < nodeScore.length; i++) {
+			for (IntElement point : instance.at(i).getElement()) {
+				TIntIntHashMap index = param.getIndex(point.getId());
+				for (int y : index.keys())
+					 nodeScore[i][y] *= Math.exp(lambda[index.get(y)] * point.getVal());
+			}
+		}
+		return nodeScore;
+	}
+	
+	private final double[][] computeEdge (Sequence instance) {
+		int N = param.sizeLabel();
+		double[][] edgeScore = new double[N][N];
+		for (int i = 0; i < edgeScore.length; i++) 
+			Arrays.fill(edgeScore[i], 1.0);
+		
+		double[] lambda = param.getWeight();
+		for (int i = 0; i < N; i++) {
+			TIntIntHashMap index = param.getEdgeIndex(i);
+			for (int j : index.keys()) 
+				 edgeScore[i][j] *= Math.exp(lambda[index.get(j)]);
+		}
+		return edgeScore;
+	}
+	
+	private final void forward (double[][] nodeScore, double[][] edgeScore) {
+		
+	}
+	
+	private final void backward (double[][] nodeScore, double[][] edgeScore) {
+	
+	}
+	
+	private final void inference (Sequence instance) {
+		
+	}
+		
+	private final double likelihood (Sequence instance) {
+		double prob = 0.0;
+		
+		return prob;
+	}
+
 	private final void runSGDL1 (UnitextCorpus trainSet) {
 		weight = param.getWeight();
 		count = param.getCount();
@@ -108,6 +154,7 @@ public class MaxEnt extends CRF {
 			while (iter.hasNext()) {
 				Sequence instance = iter.next();
 				
+				/*
 				for (SparseVector elem : instance.getSeq()) {
 					int outcome = argmax(elem, prob);
 					if (outcome == elem.getLabel()) 
@@ -118,6 +165,8 @@ public class MaxEnt extends CRF {
 					// pseudo loglikelihood  
 					currentLoglikeli -= Math.log(prob[elem.getLabel()]);
 				}
+				
+				*/
 			}
 			
 			for (int i = 0; i < weight.length; i++)
@@ -136,20 +185,19 @@ public class MaxEnt extends CRF {
 		while (iter.hasNext()) {
 			Sequence instance = iter.next();
 			
-			for (SparseVector elem : instance.getSeq()) {
-				int outcome = argmax(elem, prob);
-				if (outcome == elem.getLabel()) 
+			int[] outcome = predict(instance);
+			for (int i = 0; i < outcome.length; i++) {
+				if (outcome[i] == instance.at(i).getLabel()) 
 					nCorrect ++;
-				// true loglikelihood  
-				currentLogLikeli -= Math.log(prob[elem.getLabel()]);
 			}
+			// true loglikelihood  
+			currentLogLikeli -= Math.log(likelihood(instance));
 		}
 		for (int i = 0; i < weight.length; i++)
 			currentLogLikeli += opt_l1prior * Math.abs(weight[i]);
 
 		logger.info(String.format("[FINAL] %e %.4f", currentLogLikeli, (double) nCorrect / N ));
-		param.setWeight(weight);
-		
+		param.setWeight(weight);		
 	}
 	
 	private final void update (SparseVector instance, double[] prob, double l, double u) {
@@ -173,31 +221,11 @@ public class MaxEnt extends CRF {
 			}
 		}		
 	}
-	
-	private final int argmax (SparseVector instance, double[] prob) {
-		Arrays.fill(prob, 0);
-		
-		for (IntElement point : instance.getElement()) {
-			TIntIntHashMap index = param.getIndex(point.getId());
-			for (int y : index.keys())
-				prob[y] += weight[index.get(y)];
-		}
-		
-		double sum = 0.0, max = 0.0;
-		int max_y = 0;
-		for (int y = 0; y < prob.length; y++) {
-			prob[y] = Math.exp(prob[y]);
-			sum += prob[y];
-			if (prob[y] > max) {
-				max = prob[y];
-				max_y = y;
-			}
-		}
-		for (int y = 0; y < prob.length; y++)
-			prob[y] /= sum;
-		
-		return max_y;
-	}
 
+	private final int[] argmax (Sequence instance, double[] prob) {
+		int[] arg = new int[instance.size()];
+		
+		return arg;
+	}
 
 }

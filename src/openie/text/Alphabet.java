@@ -73,7 +73,7 @@ public class Alphabet implements Serializable {
         
         return ret;
     }
-
+    
     public boolean contains (Object entry) {
         return map.containsKey(entry);
     }
