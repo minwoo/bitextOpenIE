@@ -102,9 +102,11 @@ public class Parameter implements Serializable {
 		for (int i = 0; i < N; i++) {
 			String labelStr = "@" + labelDict.getObject(i);
 			int featId = inputDict.lookup(labelStr, false);
-			TIntIntHashMap index = getIndex(featId);
-			for (int y : index.keys())
-				edgeIndex[y][i] = index.get(y);
+			if (featId >= 0) {
+				TIntIntHashMap index = getIndex(featId);
+				for (int y : index.keys())
+					edgeIndex[y][i] = index.get(y);
+			}
 		}
 	}
 	

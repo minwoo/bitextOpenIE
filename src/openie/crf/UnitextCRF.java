@@ -105,11 +105,11 @@ public class UnitextCRF extends CRF {
 		int T = instance.size();
 		nodeScore = Stat.createMatrix(T+1, L, 1);
 		
-		for (int i = 0; i < nodeScore.length - 1; i++) {
-			for (IntElement point : instance.at(i).getElement()) {
+		for (int t = 0; t < T; t++) {
+			for (IntElement point : instance.at(t).getElement()) {
 				TIntIntHashMap index = param.getIndex(point.getId());
-				for (int y : index.keys())
-					 nodeScore[i][y] *= Math.exp(weight[index.get(y)] * point.getVal());
+				for (int y : index.keys()) 
+					 nodeScore[t][y] *= Math.exp(weight[index.get(y)] * point.getVal());
 			}
 		}
 	}
@@ -129,8 +129,8 @@ public class UnitextCRF extends CRF {
 	// forward 
 	private final void forward () {
 		int T = nodeScore.length;
-		alpha = Stat.createMatrix(T, L, 0.0);
-		alphaScale = Stat.createVector(T, 1.0);
+		alpha = Stat.createMatrix(T, L, 0);
+		alphaScale = Stat.createVector(T, 1);
 		
 		double sum = 0.0;
 		
@@ -147,8 +147,9 @@ public class UnitextCRF extends CRF {
 		for (int t = 1; t < T - 1; t++) {
 			sum = 0.0;
 			for (int i = 0; i < L; i++) {
-				for (int j = 0; j < L; j++) 
+				for (int j = 0; j < L; j++) { 
 					alpha[t][i] += alpha[t-1][j] * edgeScore[i][j];
+				}
 				alpha[t][i] *= nodeScore[t][i];
 				sum += alpha[t][i];
 			}
@@ -296,7 +297,7 @@ public class UnitextCRF extends CRF {
 			cumulativeRate += learningRate * opt_l1prior / nElement;
 			double currentLoglikeli = 0;
 			
-			trainSet.shuffle(new java.util.Random());
+			//trainSet.shuffle(new java.util.Random());
 			Iterator<Sequence> iter = trainSet.iterator();
 			while (iter.hasNext()) {
 				Sequence instance = iter.next();
@@ -317,6 +318,10 @@ public class UnitextCRF extends CRF {
 					prod_a *= alphaScale[i];
 					alphaScaleProduct.add(prod_a);
 					prod_b *= betaScale[i];
+//					if (Double.isInfinite(prod_b)) {
+//						System.out.println(betaScale[i] + " " + betaScaleProduct.toString()+ " " + i);
+//						System.out.println(alphaScaleProduct.toString());
+//					}
 					betaScaleProduct.add(prod_b);
 				}
 				Collections.reverse(alphaScaleProduct);
@@ -334,8 +339,9 @@ public class UnitextCRF extends CRF {
 					
 					// node update
 					double[] nodeProb = new double[L];
-					for (int i = 0; i < L; i++) 
+					for (int i = 0; i < L; i++) {
 						nodeProb[i] = alpha[t][i] * beta[t][i] / Z * scale_factor;
+					}
 					updateNode(elem, nodeProb, learningRate, cumulativeRate);
 					
 					// edge update
@@ -399,11 +405,12 @@ public class UnitextCRF extends CRF {
 			for (int y : index.keys()) {
 				
 				int fid = index.get(y);
+				double temp = weight[fid];
 				if (y == elem.getLabel())
-					weight[fid] += l * (1 - prob[y]);
+					weight[fid] += l * (1 - prob[y]) * point.val;
 				else
-					weight[fid] -= l * prob[y];
-				
+					weight[fid] -= l * prob[y] * point.val;
+
 				// clipping + lazy update
 				double z = weight[fid];
 				if (z > 0) 
@@ -411,14 +418,12 @@ public class UnitextCRF extends CRF {
 				else if (z < 0)
 					weight[fid] = Math.min(0, weight[fid] + (u - penalty[fid]));
 				penalty[fid] += weight[fid] - z;
+				
 			}
 		}		
 	}
 	
 	private final void updateEdge (int y, int prev_y, double[][] prob, double l, double u) {
-		int L = param.sizeLabel();
-		int[][] edgeIndex = param.getEdgeIndex();
-		
 		for (int j = 0 ; j < L; j++) {
 			for (int i = 0; i < L; i++) {
 				int fid = edgeIndex[i][j];

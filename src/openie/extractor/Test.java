@@ -50,7 +50,7 @@ public class Test {
             logger.info("===" + classifier.getClass().getName() + "===");
             
             // training mode
-            if (config.contains("train_file")) {
+            if (config.getBoolean("train") && config.contains("train_file")) {
             	classifier.setParam(new Parameter());
                 UnitextCorpus trainSet = new UnitextCorpus(classifier.getParam());
             	trainSet.readFile(config.getString("train_file"), true);
@@ -61,7 +61,7 @@ public class Test {
             		classifier.save(config.getString("model_file"));
             }
             // test mode
-            if (config.contains("test_file")) {
+            if (config.getBoolean("test") && config.contains("test_file")) {
             	// model load
             	classifier.setParam(new Parameter());
             	if (config.contains("model_file")) 

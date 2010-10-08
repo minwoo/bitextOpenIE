@@ -39,17 +39,22 @@ public class UnitextCorpus {
 		
 		Sequence oneSentence = new Sequence();
 		while ((line = br.readLine()) != null) {
-			String[] tokens = line.split(" ", -1);
+			String[] tokens = line.trim().split(" ", -1);
 			if (tokens.length < 2) { // smth strange; len(blank line) = 1
 				append(oneSentence);
 				oneSentence = new Sequence();
+				prev_label = "";
 				continue;
 			}
 			oneSentence.addElement(pack(tokens, isUpdate));
 			// todo: refactoring the following code for making edge (transition) feature index
-			param.indexingEdge(tokens[0], prev_label, 1.0, isUpdate);
+			if (prev_label != "") 
+				param.indexingEdge(tokens[0], prev_label, 1.0, isUpdate);
 			prev_label = tokens[0];
 		}
+		if (oneSentence.size() > 0)
+			append(oneSentence);
+		
 		br.close(); fr.close();
 		param.makeEdgeIndex();
 		
@@ -63,7 +68,6 @@ public class UnitextCorpus {
 	
 	private SparseVector pack (String[] tokens, boolean isUpdate) {
 		SparseVector ret = new SparseVector();
-		
 		String[] inputs = new String[tokens.length - 1];
 		double[] values = new double[tokens.length - 1];
 		for (int i = 1; i < tokens.length; i++) {
@@ -85,6 +89,11 @@ public class UnitextCorpus {
 		for (int i = 1; i < ids.length; i++) {
 			ret.addElement(ids[i], values[i-1]);
 		}
+		
+//		System.out.print(tokens[0] + ":" + ids[0]);
+//		for (int i = 0; i < inputs.length; i++)
+//			System.out.print(" " + inputs[i] + ":" + ids[i+1]);
+//		System.out.println();
 		
 		return ret;
 	}
