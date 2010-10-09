@@ -64,11 +64,14 @@ public class UnitextCRF extends CRF {
 	
 	@Override
 	public void test(UnitextCorpus testSet, Configure option) {
+		L = param.sizeLabel();
+		weight = param.getWeight();
+		edgeIndex = param.getEdgeIndex();
+
 		int nCorrect = 0;
 		Iterator<Sequence> iter = testSet.iterator();
 		while (iter.hasNext()) {
 			Sequence instance = iter.next();
-			int T = instance.size();
 			
 			computeNode(instance);
 			computeEdge(instance); 
@@ -108,8 +111,16 @@ public class UnitextCRF extends CRF {
 		for (int t = 0; t < T; t++) {
 			for (IntElement point : instance.at(t).getElement()) {
 				TIntIntHashMap index = param.getIndex(point.getId());
-				for (int y : index.keys()) 
+				for (int y : index.keys()) { 
+//					double temp = nodeScore[t][y];
+//					double temp2 =  Math.exp(weight[index.get(y)]);
+//					double temp3 = weight[index.get(y)] * point.getVal();
 					 nodeScore[t][y] *= Math.exp(weight[index.get(y)] * point.getVal());
+//					if (Double.isNaN(nodeScore[t][y])) 
+//						System.out.println("================================NODE: "+weight[index.get(y)] + " " + index.get(y));
+//					if (nodeScore[t][y] == 0) 
+//						System.out.println("!!!!!!!!!!NODE: "+ temp + " / " + temp2 + " " +  Math.exp(temp3) + " / " + (temp * temp2) + " " +  index.get(y) + " " + param.getLabelAlphabet().getObject(y) + " " + param.getInputAlphabet().getObject(point.id));
+				}
 			}
 		}
 	}
@@ -120,8 +131,13 @@ public class UnitextCRF extends CRF {
 		
 		for (int i = 0; i < L; i++) {
 			for (int j = 0; j < L; j++) {
-				if (edgeIndex[i][j] >= 0)
-					edgeScore[i][j] = Math.exp(weight[edgeIndex[i][j]]); // NOTE: if you want to exploit complex features like (y_t, y_t-1, x) you should extend this matrix as 3-dim. 
+				if (edgeIndex[i][j] >= 0) {
+					edgeScore[i][j] = Math.exp(weight[edgeIndex[i][j]]); // NOTE: if you want to exploit complex features like (y_t, y_t-1, x) you should extend this matrix as 3-dim.
+//					if (Double.isNaN(edgeScore[i][j])) 
+//						System.out.println("================================EDGE: "+weight[edgeIndex[i][j]] + " " + edgeIndex[i][j]);
+//					if (edgeScore[i][j] == 0) 
+//						System.out.println("!!!!!!!!!!EDGE: "+weight[edgeIndex[i][j]] + " " + edgeIndex[i][j] + " " + param.getLabelAlphabet().getObject(i));
+				}
 			}
 		}
 	}
@@ -154,7 +170,7 @@ public class UnitextCRF extends CRF {
 				sum += alpha[t][i];
 			}
 			
-			for (int i = 0; i < L; i++)
+			for (int i = 0; i < L; i++) 
 				alpha[t][i] /= sum;
 			alphaScale[t] = sum;
 		}
@@ -164,7 +180,7 @@ public class UnitextCRF extends CRF {
 			alpha[T-1][0] += alpha[T-2][i];
 		alphaScale[T-1] = alpha[T-1][0];
 		
-		Z = alpha[T-1][0];
+		Z = alpha[T-1][0]; // = 1
 	}
 	
 	// backward
@@ -181,8 +197,11 @@ public class UnitextCRF extends CRF {
 			beta[T-2][i] += 1.0;
 			sum += beta[T-2][i];
 		}
-		for (int i = 0; i < L; i++)
+		for (int i = 0; i < L; i++) {
 			beta[T-2][i] /= sum;
+//			if (Double.isNaN(beta[T-2][i]))
+//				System.out.println("^^^^^!! " + sum);
+		}
 		betaScale[T-2] = sum;
 		
 		// recursion
@@ -191,12 +210,17 @@ public class UnitextCRF extends CRF {
 			for (int i = 0; i < L; i++) {
 				for (int j = 0; j < L; j++) {
 					beta[t-1][i] += beta[t][j] * nodeScore[t][j] * edgeScore[j][i];
+//					if (Double.isNaN(beta[t-1][i]))
+//						System.out.println("^^^^^^ " + j + " : " + beta[t][j] + " " + nodeScore[t][j] + " " + edgeScore[j][i] + " " + sum);
 				}
 				sum += beta[t-1][i];
 			}
 			
-			for (int i = 0; i < L; i++)
+			for (int i = 0; i < L; i++) {
 				beta[t-1][i] /= sum;
+//				if (Double.isNaN(beta[t-1][i]))
+//					System.out.println("^^^^^^@@@ " + i + " : " + beta[t-1][i] + " " + sum);
+			}
 			betaScale[t-1] = sum;
 		}
 	}
@@ -297,7 +321,7 @@ public class UnitextCRF extends CRF {
 			cumulativeRate += learningRate * opt_l1prior / nElement;
 			double currentLoglikeli = 0;
 			
-			//trainSet.shuffle(new java.util.Random());
+			trainSet.shuffle(new java.util.Random());
 			Iterator<Sequence> iter = trainSet.iterator();
 			while (iter.hasNext()) {
 				Sequence instance = iter.next();
@@ -311,21 +335,30 @@ public class UnitextCRF extends CRF {
 				int[] outcome = argmax(); // do argmax inference for evaluation
 				
 				// scale factor
-				ArrayList<Double> alphaScaleProduct = new ArrayList<Double>();
-				ArrayList<Double> betaScaleProduct = new ArrayList<Double>();
-				double prod_a = 1.0, prod_b = 1.0;
+//				ArrayList<Double> alphaScaleProduct = new ArrayList<Double>();
+//				ArrayList<Double> betaScaleProduct = new ArrayList<Double>();
+				ArrayList<Double> scaleProduct = new ArrayList<Double>();
+				double prod_a = 1.0, prod_b = 1.0, prod = 1.0;
 				for (int i = T; i >= 0; i--) {
-					prod_a *= alphaScale[i];
-					alphaScaleProduct.add(prod_a);
-					prod_b *= betaScale[i];
-//					if (Double.isInfinite(prod_b)) {
-//						System.out.println(betaScale[i] + " " + betaScaleProduct.toString()+ " " + i);
-//						System.out.println(alphaScaleProduct.toString());
-//					}
-					betaScaleProduct.add(prod_b);
+					prod *= (betaScale[i] / alphaScale[i]);
+					scaleProduct.add(prod);
+//					double temp = prod_a;
+//					prod_a *= alphaScale[i];
+//					alphaScaleProduct.add(prod_a);
+//					prod_b *= betaScale[i];
+					//System.out.println(alphaScale[i] + " / " + betaScale[i]);
+//					if (Double.isInfinite(prod_a)) {
+//						System.out.println("@@@ " + alphaScale[i] + " / "  + temp);
+//						for (Double k : alphaScaleProduct)
+//							System.out.print(" " + k);
+//						System.out.println();
+					//}
+//					betaScaleProduct.add(prod_b);
 				}
-				Collections.reverse(alphaScaleProduct);
-				Collections.reverse(betaScaleProduct);
+				//System.out.println();
+//				Collections.reverse(alphaScaleProduct);
+//				Collections.reverse(betaScaleProduct);
+				Collections.reverse(scaleProduct);
 
 				int prev_y = 0;
 				for (int t = 0; t < outcome.length; t++) {
@@ -334,23 +367,28 @@ public class UnitextCRF extends CRF {
 					if (outcome[t] == y)
 						nCorrect ++;
 					
-					double scale_factor = betaScaleProduct.get(t) / alphaScaleProduct.get(t+1);
-					double scale_factor2 = betaScaleProduct.get(t) / alphaScaleProduct.get(t);
-					
+//					double scale_factor3 = betaScaleProduct.get(t) / alphaScaleProduct.get(t+1);
+//					double scale_factor4 = betaScaleProduct.get(t) / alphaScaleProduct.get(t);
+					double scale_factor = scaleProduct.get(t+1) * betaScale[t];
+					double scale_factor2 = scaleProduct.get(t);
 					// node update
 					double[] nodeProb = new double[L];
 					for (int i = 0; i < L; i++) {
 						nodeProb[i] = alpha[t][i] * beta[t][i] / Z * scale_factor;
+//						if (nodeProb[i] > 1)
+//							System.out.println("@ "+ i + " / " + alpha[t][i] + " / " + beta[t][i] + " / " + Z + " / " + scale_factor + " " + t  + " || " + (alpha[t][i] * beta[t][i] / Z));
 					}
 					updateNode(elem, nodeProb, learningRate, cumulativeRate);
 					
 					// edge update
 					if (t > 0) {
 						double[][] edgeProb = new double[L][L];
-						for (int i = 0; i < L; i++) 
-							for (int j = 0; j < L; j++)   
+						for (int i = 0; i < L; i++) { 
+							for (int j = 0; j < L; j++) {    
 								edgeProb[i][j] = alpha[t-1][j] * beta[t][i] * nodeScore[t][i] * edgeScore[i][j] / Z * scale_factor2;
-						updateEdge(y, prev_y, edgeProb, learningRate, cumulativeRate);
+							}
+						}
+						//updateEdge(y, prev_y, edgeProb, learningRate, cumulativeRate);
 					}
 					prev_y = y;
 				}
@@ -361,7 +399,7 @@ public class UnitextCRF extends CRF {
 			for (int i = 0; i < weight.length; i++)
 				currentLoglikeli += opt_l1prior * Math.abs(weight[i]);
 			
-			logger.info(String.format("[%d] %e %.4f", niter+1, currentLoglikeli, (double) nCorrect / nElement ));
+			logger.info(String.format("[%d] %e %.4f (%d)", niter+1, currentLoglikeli, (double) nCorrect / nElement , numNonZero()));
 			if ( Math.abs(currentLoglikeli - prevLoglikeli) / (Math.abs(currentLoglikeli) + Math.abs(prevLoglikeli)) < opt_eta)
 				break;
 			prevLoglikeli = currentLoglikeli;
@@ -373,7 +411,6 @@ public class UnitextCRF extends CRF {
 		Iterator<Sequence> iter = trainSet.iterator();
 		while (iter.hasNext()) {
 			Sequence instance = iter.next();
-			int T = instance.size();
 			
 			computeNode(instance);
 			computeEdge(instance); 
@@ -395,7 +432,7 @@ public class UnitextCRF extends CRF {
 		for (int i = 0; i < weight.length; i++)
 			currentLogLikeli += opt_l1prior * Math.abs(weight[i]);
 
-		logger.info(String.format("[FINAL] %e %.4f", currentLogLikeli, (double) nCorrect / nElement ));
+		logger.info(String.format("[FINAL] %e %.4f (%d)", currentLogLikeli, (double) nCorrect / nElement, numNonZero()));
 		param.setWeight(weight);		
 	}
 	
@@ -405,7 +442,6 @@ public class UnitextCRF extends CRF {
 			for (int y : index.keys()) {
 				
 				int fid = index.get(y);
-				double temp = weight[fid];
 				if (y == elem.getLabel())
 					weight[fid] += l * (1 - prob[y]) * point.val;
 				else
@@ -418,7 +454,6 @@ public class UnitextCRF extends CRF {
 				else if (z < 0)
 					weight[fid] = Math.min(0, weight[fid] + (u - penalty[fid]));
 				penalty[fid] += weight[fid] - z;
-				
 			}
 		}		
 	}
@@ -442,9 +477,16 @@ public class UnitextCRF extends CRF {
 				else if (z < 0)
 					weight[fid] = Math.min(0, weight[fid] + (u - penalty[fid]));
 				penalty[fid] += weight[fid] - z;
-				
 			}
 		}
+	}
+	
+	private final int numNonZero() {
+		int n = 0;
+		for (double w : weight)
+			if (w != 0)
+				n++;
+		return n;
 	}
 
 }

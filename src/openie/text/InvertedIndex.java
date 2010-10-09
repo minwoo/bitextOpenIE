@@ -36,19 +36,21 @@ public class InvertedIndex implements Serializable {
 	}
 	
 	public int lookup (int idY, int idX, boolean isUpdate) {
+		if (idX < 0 || idY < 0)
+			return -1;
 		int id = -1;
 		
 		if (idX < index.size()) {
 			TIntIntHashMap map = index.get(idX);
 			if (map.contains(idY)) 
 				id = map.get(idY);
-			else {
+			else if (isUpdate) {
 				id = nElements;
 				map.put(idY, id);
 				nElements++;
 			}
 		}
-		else {
+		else if (isUpdate) {
 			TIntIntHashMap map = new TIntIntHashMap();
 			id = nElements;
 			map.put(idY, id);

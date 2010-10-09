@@ -72,28 +72,32 @@ public class Parameter implements Serializable {
 		
 	public int lookup (int labelId, int inputId, double value, boolean isUpdate) {
 		int fid = paramIndex.lookup(labelId, inputId, isUpdate);
+		if (fid < 0)
+			return -1;
 		
-		if (fid < weight.size()) {
-			double newValue = count.get(fid) + value;
-			count.set(fid, newValue);
-		}
-		else if (isUpdate) {
-			assert(fid == weight.size());
-			weight.add(0);
-			count.add(value);
+		if (isUpdate) {
+			if (fid < weight.size()) {
+				double newValue = count.get(fid) + value;
+				count.set(fid, newValue);
+			}
+			else {
+				assert(fid == weight.size());
+				weight.add(0);
+				count.add(value);
+			}
 		}
 		
 		assert(paramIndex.size() == weight.size());
 		return fid;
 	}
 	
-	public int indexingEdge (String label, String prevLabel, double value, boolean isUpdate) {
-		int labelId = labelDict.lookup(label, isUpdate);
-		int featId = inputDict.lookup("@" + prevLabel, isUpdate);
-		return lookup(labelId, featId, value, isUpdate);
+	public int indexingEdge (String label, String prevLabel, double value) {
+		int labelId = labelDict.lookup(label, true);
+		int featId = inputDict.lookup("@" + prevLabel, true);
+		return lookup(labelId, featId, value, true);
 	}
 	
-	public void makeEdgeIndex () {
+	public void makeEdgeIndex (boolean isUpdate) {
 		int N = sizeLabel();
 		edgeIndex = new int[N][N];
 		for (int i = 0; i < N; i++)
@@ -101,13 +105,20 @@ public class Parameter implements Serializable {
 		
 		for (int i = 0; i < N; i++) {
 			String labelStr = "@" + labelDict.getObject(i);
-			int featId = inputDict.lookup(labelStr, false);
-			if (featId >= 0) {
-				TIntIntHashMap index = getIndex(featId);
-				for (int y : index.keys())
-					edgeIndex[y][i] = index.get(y);
+			int featId = inputDict.lookup("@" + labelStr, isUpdate);
+			for (int j = 0; j < N; j++) {
+				edgeIndex[j][i] = lookup(j, featId, 0, isUpdate);
 			}
 		}
+//		for (int i = 0; i < N; i++) {
+//			String labelStr = "@" + labelDict.getObject(i);
+//			int featId = inputDict.lookup(labelStr, false);
+//			if (featId >= 0) {
+//				TIntIntHashMap index = getIndex(featId);
+//				for (int y : index.keys())
+//					edgeIndex[y][i] = index.get(y);
+//			}
+//		}
 	}
 	
 	public int[] getEdgeIndex (int i) {

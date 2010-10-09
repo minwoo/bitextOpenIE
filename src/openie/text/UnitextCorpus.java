@@ -41,22 +41,23 @@ public class UnitextCorpus {
 		while ((line = br.readLine()) != null) {
 			String[] tokens = line.trim().split(" ", -1);
 			if (tokens.length < 2) { // smth strange; len(blank line) = 1
-				append(oneSentence);
+				if (oneSentence.size() > 0)
+					append(oneSentence);
 				oneSentence = new Sequence();
 				prev_label = "";
 				continue;
 			}
 			oneSentence.addElement(pack(tokens, isUpdate));
 			// todo: refactoring the following code for making edge (transition) feature index
-			if (prev_label != "") 
-				param.indexingEdge(tokens[0], prev_label, 1.0, isUpdate);
-			prev_label = tokens[0];
+//			if (prev_label != "" && isUpdate) 
+//				param.indexingEdge(tokens[0], prev_label, 1.0);
+//			prev_label = tokens[0];
 		}
 		if (oneSentence.size() > 0)
 			append(oneSentence);
 		
 		br.close(); fr.close();
-		param.makeEdgeIndex();
+		param.makeEdgeIndex(isUpdate);
 		
 		return true;
 	}
@@ -87,7 +88,8 @@ public class UnitextCorpus {
 		int[] ids = param.indexing(tokens[0], inputs, values, isUpdate);
 		ret.label = ids[0];
 		for (int i = 1; i < ids.length; i++) {
-			ret.addElement(ids[i], values[i-1]);
+			if (ids[i] >= 0)
+				ret.addElement(ids[i], values[i-1]);
 		}
 		
 //		System.out.print(tokens[0] + ":" + ids[0]);
