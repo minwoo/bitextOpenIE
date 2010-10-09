@@ -115,7 +115,7 @@ public class UnitextCRF extends CRF {
 //					double temp = nodeScore[t][y];
 //					double temp2 =  Math.exp(weight[index.get(y)]);
 //					double temp3 = weight[index.get(y)] * point.getVal();
-					 nodeScore[t][y] *= Math.exp(weight[index.get(y)] * point.getVal());
+					nodeScore[t][y] *= Math.exp(weight[index.get(y)] * point.getVal());
 //					if (Double.isNaN(nodeScore[t][y])) 
 //						System.out.println("================================NODE: "+weight[index.get(y)] + " " + index.get(y));
 //					if (nodeScore[t][y] == 0) 
@@ -132,7 +132,7 @@ public class UnitextCRF extends CRF {
 		for (int i = 0; i < L; i++) {
 			for (int j = 0; j < L; j++) {
 				if (edgeIndex[i][j] >= 0) {
-					edgeScore[i][j] = Math.exp(weight[edgeIndex[i][j]]); // NOTE: if you want to exploit complex features like (y_t, y_t-1, x) you should extend this matrix as 3-dim.
+					//edgeScore[i][j] = Math.exp(weight[edgeIndex[i][j]]); // NOTE: if you want to exploit complex features like (y_t, y_t-1, x) you should extend this matrix as 3-dim.
 //					if (Double.isNaN(edgeScore[i][j])) 
 //						System.out.println("================================EDGE: "+weight[edgeIndex[i][j]] + " " + edgeIndex[i][j]);
 //					if (edgeScore[i][j] == 0) 
