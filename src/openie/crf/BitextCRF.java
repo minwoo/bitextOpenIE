@@ -7,11 +7,8 @@
 
 package openie.crf;
 
-import java.io.IOException;
-
 import openie.text.Sequence;
 import openie.text.UnitextCorpus;
-import openie.text.SparseVector;
 import openie.util.Configure;
 
 public class BitextCRF extends CRF {

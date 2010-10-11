@@ -9,21 +9,13 @@ package openie.crf;
 
 import gnu.trove.map.hash.TIntIntHashMap;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import org.apache.log4j.Logger;
 
-import openie.text.Parameter;
 import openie.text.Sequence;
 import openie.text.UnitextCorpus;
 import openie.text.SparseVector;
@@ -57,9 +49,14 @@ public class UnitextCRF extends CRF {
 	private int[][] edgeIndex;
 
 	@Override
-	public int[] predict (Sequence example) {
-		double[] prob = new double[example.size()];
-		return argmax(example, prob);
+	public int[] predict (Sequence instance) {
+		computeNode(instance);
+		computeEdge(instance); 
+		
+		forward();
+		backward();
+		
+		return argmax();
 	}
 	
 	@Override
@@ -73,14 +70,8 @@ public class UnitextCRF extends CRF {
 		while (iter.hasNext()) {
 			Sequence instance = iter.next();
 			
-			computeNode(instance);
-			computeEdge(instance); 
-			
-			forward();
-			backward();
-			
 			// do argmax inference for evaluation
-			int[] outcome = argmax();
+			int[] outcome = predict(instance);
 			for (int i = 0; i < outcome.length; i++) {
 				if (outcome[i] == instance.at(i).getLabel()) 
 					nCorrect ++;
@@ -111,16 +102,8 @@ public class UnitextCRF extends CRF {
 		for (int t = 0; t < T; t++) {
 			for (IntElement point : instance.at(t).getElement()) {
 				TIntIntHashMap index = param.getIndex(point.getId());
-				for (int y : index.keys()) { 
-//					double temp = nodeScore[t][y];
-//					double temp2 =  Math.exp(weight[index.get(y)]);
-//					double temp3 = weight[index.get(y)] * point.getVal();
+				for (int y : index.keys())  
 					nodeScore[t][y] *= Math.exp(weight[index.get(y)] * point.getVal());
-//					if (Double.isNaN(nodeScore[t][y])) 
-//						System.out.println("================================NODE: "+weight[index.get(y)] + " " + index.get(y));
-//					if (nodeScore[t][y] == 0) 
-//						System.out.println("!!!!!!!!!!NODE: "+ temp + " / " + temp2 + " " +  Math.exp(temp3) + " / " + (temp * temp2) + " " +  index.get(y) + " " + param.getLabelAlphabet().getObject(y) + " " + param.getInputAlphabet().getObject(point.id));
-				}
 			}
 		}
 	}
@@ -131,13 +114,8 @@ public class UnitextCRF extends CRF {
 		
 		for (int i = 0; i < L; i++) {
 			for (int j = 0; j < L; j++) {
-				if (edgeIndex[i][j] >= 0) {
-					//edgeScore[i][j] = Math.exp(weight[edgeIndex[i][j]]); // NOTE: if you want to exploit complex features like (y_t, y_t-1, x) you should extend this matrix as 3-dim.
-//					if (Double.isNaN(edgeScore[i][j])) 
-//						System.out.println("================================EDGE: "+weight[edgeIndex[i][j]] + " " + edgeIndex[i][j]);
-//					if (edgeScore[i][j] == 0) 
-//						System.out.println("!!!!!!!!!!EDGE: "+weight[edgeIndex[i][j]] + " " + edgeIndex[i][j] + " " + param.getLabelAlphabet().getObject(i));
-				}
+				if (edgeIndex[i][j] >= 0) 
+					edgeScore[i][j] = Math.exp(weight[edgeIndex[i][j]]); // NOTE: if you want to exploit complex features like (y_t, y_t-1, x) you should extend this matrix as 3-dim.
 			}
 		}
 	}
@@ -197,82 +175,80 @@ public class UnitextCRF extends CRF {
 			beta[T-2][i] += 1.0;
 			sum += beta[T-2][i];
 		}
-		for (int i = 0; i < L; i++) {
+		for (int i = 0; i < L; i++) 
 			beta[T-2][i] /= sum;
-//			if (Double.isNaN(beta[T-2][i]))
-//				System.out.println("^^^^^!! " + sum);
-		}
 		betaScale[T-2] = sum;
 		
 		// recursion
 		for (int t = T-2; t >= 1; t--) {
 			sum = 0.0;
 			for (int i = 0; i < L; i++) {
-				for (int j = 0; j < L; j++) {
+				for (int j = 0; j < L; j++)
 					beta[t-1][i] += beta[t][j] * nodeScore[t][j] * edgeScore[j][i];
-//					if (Double.isNaN(beta[t-1][i]))
-//						System.out.println("^^^^^^ " + j + " : " + beta[t][j] + " " + nodeScore[t][j] + " " + edgeScore[j][i] + " " + sum);
-				}
 				sum += beta[t-1][i];
 			}
 			
-			for (int i = 0; i < L; i++) {
+			for (int i = 0; i < L; i++) 
 				beta[t-1][i] /= sum;
-//				if (Double.isNaN(beta[t-1][i]))
-//					System.out.println("^^^^^^@@@ " + i + " : " + beta[t-1][i] + " " + sum);
-			}
 			betaScale[t-1] = sum;
 		}
 	}
 
-	private final int[] argmax (Sequence instance, double[] prob) {
-		int[] arg = new int[instance.size()];
-		
-	
-		return arg;
-	}
-	
 	private final int[] argmax () {
 		int T = nodeScore.length;
 		
 		int[][] psi = new int[T][L]; 
-		double[][] delta = Stat.createMatrix(T, L, 1);
+		double[][] delta = Stat.createMatrix(T, L, 0);
+		
+		// init
+		for (int i = 0; i < L; i++) {
+			psi[0][i] = 0;
+			delta[0][i] = Math.log(nodeScore[0][i]);
+		}
 		
 		// recursion
-		for (int t = 0; t < T; t++) {
-			
+		for (int t = 1; t < T-1; t++) {
 			for (int i = 0; i < L; i++) {
 				int maxPsi = 0;
-				double maxDelta = -10000.0;
-				if  (t == 0) {
-					maxDelta = 1.0;
-					maxPsi = 0;
-				} else {
-					for (int j = 0; j < L; j++) {
-						double val = delta[t-1][j] * edgeScore[i][j];
-						if (val > maxDelta) {
-							maxDelta = val;
-							maxPsi = j;
-						}
+				double maxDelta = Double.MIN_VALUE;
+				for (int j = 0; j < L; j++) {
+					double val = delta[t-1][j] + Math.log(edgeScore[i][j]); 
+					if (val > maxDelta) {
+						maxDelta = val;
+						maxPsi = j;
 					}
 				}
-				maxDelta *= nodeScore[t][i];
+				maxDelta += Math.log(nodeScore[t][i]);
 				psi[t][i] = maxPsi;
 				delta[t][i] = maxDelta;
 			}
 		}
+		// last state
+		for (int i = 0; i < L; i++) {
+			psi[T-1][i] = -1;
+			delta[T-1][i] = Double.MIN_VALUE;
+		}
+		int maxPsi = 0; double maxDelta = Double.MIN_VALUE;
+		for (int i = 0; i < L; i++) {
+			if (delta[T-2][i] > maxDelta) {
+				maxDelta = delta[T-2][i];
+				maxPsi = i;
+			}
+		}
+		psi[T-1][0] = maxPsi;
+		delta[T-1][0] = maxDelta;
 		
 		// back-tracking
-		int[] arg = new int[T-1];
+		int[] args = new int[T-1];
 		int prev_y = 0;
-		for (int i = T - 1; i >= 1; i--) {
+		for (int i = T-1; i >= 1; i--) {
 			int y = psi[i][prev_y];
 			prev_y = y;
-			arg[i-1] = y;
+			args[i-1] = y;
 		}
-		double prob = delta[T-1][0];
+		//double prob = Math.exp(delta[T-1][0]);
 		
-		return arg;
+		return args;
 	}
 
 	private final double likelihood (Sequence instance) {
@@ -321,7 +297,7 @@ public class UnitextCRF extends CRF {
 			cumulativeRate += learningRate * opt_l1prior / nElement;
 			double currentLoglikeli = 0;
 			
-			trainSet.shuffle(new java.util.Random());
+			//trainSet.shuffle(new java.util.Random());
 			Iterator<Sequence> iter = trainSet.iterator();
 			while (iter.hasNext()) {
 				Sequence instance = iter.next();
@@ -335,31 +311,15 @@ public class UnitextCRF extends CRF {
 				int[] outcome = argmax(); // do argmax inference for evaluation
 				
 				// scale factor
-//				ArrayList<Double> alphaScaleProduct = new ArrayList<Double>();
-//				ArrayList<Double> betaScaleProduct = new ArrayList<Double>();
 				ArrayList<Double> scaleProduct = new ArrayList<Double>();
-				double prod_a = 1.0, prod_b = 1.0, prod = 1.0;
+				double prod = 1.0;
 				for (int i = T; i >= 0; i--) {
 					prod *= (betaScale[i] / alphaScale[i]);
 					scaleProduct.add(prod);
-//					double temp = prod_a;
-//					prod_a *= alphaScale[i];
-//					alphaScaleProduct.add(prod_a);
-//					prod_b *= betaScale[i];
-					//System.out.println(alphaScale[i] + " / " + betaScale[i]);
-//					if (Double.isInfinite(prod_a)) {
-//						System.out.println("@@@ " + alphaScale[i] + " / "  + temp);
-//						for (Double k : alphaScaleProduct)
-//							System.out.print(" " + k);
-//						System.out.println();
-					//}
-//					betaScaleProduct.add(prod_b);
 				}
-				//System.out.println();
-//				Collections.reverse(alphaScaleProduct);
-//				Collections.reverse(betaScaleProduct);
 				Collections.reverse(scaleProduct);
-
+				
+				
 				int prev_y = 0;
 				for (int t = 0; t < outcome.length; t++) {
 					SparseVector elem = instance.at(t);
@@ -367,29 +327,24 @@ public class UnitextCRF extends CRF {
 					if (outcome[t] == y)
 						nCorrect ++;
 					
-//					double scale_factor3 = betaScaleProduct.get(t) / alphaScaleProduct.get(t+1);
-//					double scale_factor4 = betaScaleProduct.get(t) / alphaScaleProduct.get(t);
 					double scale_factor = scaleProduct.get(t+1) * betaScale[t];
 					double scale_factor2 = scaleProduct.get(t);
+					
 					// node update
-					double[] nodeProb = new double[L];
-					for (int i = 0; i < L; i++) {
-						nodeProb[i] = alpha[t][i] * beta[t][i] / Z * scale_factor;
-//						if (nodeProb[i] > 1)
-//							System.out.println("@ "+ i + " / " + alpha[t][i] + " / " + beta[t][i] + " / " + Z + " / " + scale_factor + " " + t  + " || " + (alpha[t][i] * beta[t][i] / Z));
-					}
-					updateNode(elem, nodeProb, learningRate, cumulativeRate);
+					double[] nodeProbs = new double[L];
+					for (int i = 0; i < L; i++) 
+						nodeProbs[i] = alpha[t][i] * beta[t][i] / Z * scale_factor;
+					updateNode(elem, nodeProbs, learningRate, cumulativeRate);
 					
 					// edge update
 					if (t > 0) {
-						double[][] edgeProb = new double[L][L];
-						for (int i = 0; i < L; i++) { 
-							for (int j = 0; j < L; j++) {    
-								edgeProb[i][j] = alpha[t-1][j] * beta[t][i] * nodeScore[t][i] * edgeScore[i][j] / Z * scale_factor2;
-							}
-						}
-						//updateEdge(y, prev_y, edgeProb, learningRate, cumulativeRate);
+						double[][] edgeProbs = new double[L][L];
+						for (int i = 0; i < L; i++)  
+							for (int j = 0; j < L; j++)     
+								edgeProbs[i][j] = alpha[t-1][j] * beta[t][i] * nodeScore[t][i] * edgeScore[i][j] / Z * scale_factor2;
+						updateEdge(y, prev_y, edgeProbs, learningRate, cumulativeRate);
 					}
+					
 					prev_y = y;
 				}
 				

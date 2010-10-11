@@ -18,10 +18,6 @@ import java.util.zip.GZIPOutputStream;
 import openie.text.*;
 import openie.util.*;
 
-import org.apache.log4j.Logger;
-
-import sun.tools.tree.ThisExpression;
-
 public abstract class CRF {
 	
 	private static final long serialVersionUID = 1L;
@@ -38,9 +34,6 @@ public abstract class CRF {
     public abstract void train (UnitextCorpus trainSet, Configure option);
     public abstract void test (UnitextCorpus testSet, Configure option);
     public abstract int[] predict (Sequence example);
-    //public abstract int predict (SparseVector example);
-    //public abstract void save (String filename) throws IOException;
-    //public abstract void load (String filename) throws IOException, ClassNotFoundException;
     
 	public void load (String filename) throws IOException, ClassNotFoundException {
 		FileInputStream fis = new FileInputStream(filename);

@@ -74,7 +74,6 @@ public class UnitextCorpus {
 		for (int i = 1; i < tokens.length; i++) {
 			String[] insideTokens = tokens[i].split(":", -1);
 			
-			int id = -1; double val = 1;
 			if (insideTokens.length > 1) {
 				inputs[i-1] = insideTokens[0];
 				values[i-1] = Double.parseDouble(insideTokens[1]);
@@ -91,11 +90,6 @@ public class UnitextCorpus {
 			if (ids[i] >= 0)
 				ret.addElement(ids[i], values[i-1]);
 		}
-		
-//		System.out.print(tokens[0] + ":" + ids[0]);
-//		for (int i = 0; i < inputs.length; i++)
-//			System.out.print(" " + inputs[i] + ":" + ids[i+1]);
-//		System.out.println();
 		
 		return ret;
 	}
