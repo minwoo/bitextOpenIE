@@ -67,12 +67,15 @@ public class UnitextCorpus {
 		numOfElement += instance.size();
 	}
 	
+	static public String elimiter = ":";
+	
 	private SparseVector pack (String[] tokens, boolean isUpdate) {
 		SparseVector ret = new SparseVector();
 		String[] inputs = new String[tokens.length - 1];
 		double[] values = new double[tokens.length - 1];
 		for (int i = 1; i < tokens.length; i++) {
-			String[] insideTokens = tokens[i].split(":", -1);
+			String[] insideTokens = {tokens[i]};
+			//String[] insideTokens = tokens[i].split(elimiter, -1);
 			
 			if (insideTokens.length > 1) {
 				inputs[i-1] = insideTokens[0];
