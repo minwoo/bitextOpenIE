@@ -7,6 +7,8 @@
 
 package openie.crf;
 
+import java.util.ArrayList;
+
 import openie.text.Sequence;
 import openie.text.UnitextCorpus;
 import openie.util.Configure;
@@ -23,6 +25,13 @@ public class BitextCRF extends CRF {
 	public void test(UnitextCorpus testSet, Configure option) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	@Override
+	public String[] predict (ArrayList<ArrayList<String>> instance) {
+		String[] output = new String[instance.size()];
+		
+		return output;
 	}
 
 	@Override

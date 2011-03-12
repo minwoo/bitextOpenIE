@@ -9,6 +9,7 @@ package openie.crf;
 
 import gnu.trove.map.hash.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import org.apache.log4j.Logger;
@@ -60,6 +61,13 @@ public class MaxEnt extends CRF {
 			}
 		}
 		logger.info(String.format("[TEST] %.4f", (double) nCorrect / testSet.sizeElement() ));
+	}
+
+	@Override
+	public String[] predict (ArrayList<ArrayList<String>> instance) {
+		String[] output = new String[instance.size()];
+		
+		return output;
 	}
 
 	@Override

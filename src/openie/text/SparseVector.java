@@ -33,6 +33,10 @@ public class SparseVector {
 		this.count = 1;
 	}
 	
+	public void setLabel (int l) {
+		label = l;
+	}
+	
 	public int getLabel () {
 		return label;
 	}

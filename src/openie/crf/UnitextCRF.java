@@ -16,6 +16,7 @@ import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 
+import openie.text.Alphabet;
 import openie.text.Sequence;
 import openie.text.UnitextCorpus;
 import openie.text.SparseVector;
@@ -79,6 +80,30 @@ public class UnitextCRF extends CRF {
 		}
 		logger.info(String.format("[TEST] %.4f", (double) nCorrect / testSet.sizeElement() ));
 	}
+	
+	@Override
+	public String[] predict (ArrayList<ArrayList<String>> stringInstances) {
+		String[] output = new String[stringInstances.size()];
+		L = param.sizeLabel();
+		weight = param.getWeight();
+		edgeIndex = param.getEdgeIndex();
+
+		Sequence instance = new Sequence();
+		for (ArrayList<String> stringInstance : stringInstances) {
+			instance.addElement(pack(stringInstance));
+		}
+		
+		int[] outcome = predict(instance);
+		assert(outcome.length == output.length);
+		
+		Alphabet labelDict = param.getLabelAlphabet();
+		
+		for (int i = 0; i < outcome.length; i++) {
+			output[i] = (String) labelDict.getObject(outcome[i]);
+		}
+		
+		return output;
+	}
 
 	@Override
 	public void train(UnitextCorpus trainSet, Configure option) {
@@ -95,6 +120,7 @@ public class UnitextCRF extends CRF {
 	}
 	
 	// pre-computing of node score (i.e. sums of node features)
+	// TODO: reducing the computation by dividing two sets {ENT, NP} and {O, REL}
 	private final void computeNode (Sequence instance) {
 		int T = instance.size();
 		nodeScore = Stat.createMatrix(T+1, L, 1);

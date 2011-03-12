@@ -1,1 +1,5 @@
-bin
+/bin
+bin/test
+/data
+/baseline
+/test

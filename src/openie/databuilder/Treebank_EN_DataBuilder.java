@@ -70,6 +70,7 @@ public class Treebank_EN_DataBuilder {
 		if (isInPhrase)
 			seq.add(entNode);
 	}
+	
 	public void tokenizeString(String input, ArrayList<Node> seq, String arg) {
 		if (input.trim().length() <= 0) return;
 		String[] tokens = input.trim().split(" ");
@@ -293,6 +294,8 @@ public class Treebank_EN_DataBuilder {
 	
 	public boolean printInstance(String line, BufferedWriter outputWriter) throws IOException {
 		ArrayList<Node> sequence = new ArrayList<Node>();
+		
+		line = line.replace("\\/", "\\\\");
 		
 		// left context of ARG1
 		String leftContextOfARG1 = line.substring(0, line.indexOf("<ARG1"));

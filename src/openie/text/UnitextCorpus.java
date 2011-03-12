@@ -37,6 +37,13 @@ public class UnitextCorpus {
 		String line = null;
 		String prev_label = "";
 		
+		// initialization for OpenIE; pre-defined labels - ENT, NP
+		Alphabet labelDict = param.getLabelAlphabet();
+		int entLabelId = labelDict.lookup("ENT", true);
+		int npLabelId = labelDict.lookup("NP", true);
+		assert (entLabelId == 0);
+		assert (npLabelId == 1);
+		
 		Sequence oneSentence = new Sequence();
 		while ((line = br.readLine()) != null) {
 			String[] tokens = line.trim().split(" ", -1);
