@@ -297,8 +297,8 @@ public class UnitextCRF extends CRF {
 			prev_y = y;
 			prob /= alphaScale[t];
 		}
-		if (prob == 0.0)
-			logger.error("seq. prob == 0.0");
+		if (Double.isNaN(prob) || Double.isInfinite(prob))
+			logger.error("seq. prob == " + prob);
 		
 		return prob / Z;
 	}
@@ -374,7 +374,9 @@ public class UnitextCRF extends CRF {
 					prev_y = y;
 				}
 				
-				currentLoglikeli -= Math.log(likelihood(instance));
+				double likeli = likelihood(instance);
+				if (!Double.isInfinite(likeli) && !Double.isNaN(likeli)) 
+					currentLoglikeli -= Math.log(likeli);
 			}
 			
 			for (int i = 0; i < weight.length; i++)
@@ -408,7 +410,9 @@ public class UnitextCRF extends CRF {
 			}
 			
 			// true loglikelihood  
-			currentLogLikeli -= Math.log(likelihood(instance));
+			double likeli = likelihood(instance);
+			if (!Double.isInfinite(likeli) && !Double.isNaN(likeli)) 
+				currentLogLikeli -= Math.log(likeli);
 		}
 		for (int i = 0; i < weight.length; i++)
 			currentLogLikeli += opt_l1prior * Math.abs(weight[i]);

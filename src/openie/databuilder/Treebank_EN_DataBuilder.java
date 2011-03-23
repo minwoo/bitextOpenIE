@@ -196,7 +196,7 @@ public class Treebank_EN_DataBuilder {
         		// for testing
         		String[] fileToken = inFile.getPath().split("\\\\");
         		int section = Integer.parseInt(fileToken[fileToken.length-2]);
-        		if (section > 1)
+        		if (section > 2)
         			break;
         		
     			BufferedReader inputReader = new BufferedReader(new FileReader(inFile.getPath()));
