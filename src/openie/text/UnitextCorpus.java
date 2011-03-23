@@ -46,6 +46,8 @@ public class UnitextCorpus {
 		
 		Sequence oneSentence = new Sequence();
 		while ((line = br.readLine()) != null) {
+			if (line.startsWith("#"))
+				continue;
 			String[] tokens = line.trim().split(" ", -1);
 			if (tokens.length < 2) { // smth strange; len(blank line) = 1
 				if (oneSentence.size() > 0)
