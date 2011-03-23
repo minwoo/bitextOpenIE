@@ -268,8 +268,8 @@ public class Treebank_EN_DataBuilder {
 //		for (int i = 0; i < distanceMap.length; i++)
 //			System.err.println(i+ "\t" + distanceMap[i]);
 //		System.err.println("NNP: " + numNNP + " NNG: " + numNNG);
-		for (String a : tagMap.keySet())
-			System.err.println(a + " " + tagMap.get(a));
+//		for (String a : tagMap.keySet())
+//			System.err.println(a + " " + tagMap.get(a));
 		
 		if (trainStream != null)
 			trainStream.close();
