@@ -15,8 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import openie.crf.*;
-import openie.databuilder.Treebank_EN_DataBuilder.Node;
 import openie.text.*;
+import openie.text.FeatureFactory.Node;
 import openie.util.*;
 import opennlp.tools.chunker.*;
 import opennlp.tools.postag.*;
@@ -102,44 +102,6 @@ public class Extractor {
 		return phrases.toArray(new Span[phrases.size()]);
 	}
 
-	public ArrayList<Node> tokenizeString(String[] words, String[] tags, String[] chunks, int startIdx, int endIdx) {
-		ArrayList<Node> seq = new ArrayList<Node>();
-		if (startIdx > endIdx) return seq;
-		if (endIdx < 0) return seq;
-		if (startIdx < 0) startIdx = 0;
-		if (startIdx >= words.length) return seq;
-		if (endIdx > words.length) endIdx = words.length;
-		
-		boolean isInPhrase = false;
-		Node entNode = new Node();
-		for (int i = startIdx; i < endIdx; i++) {
-			if (chunks[i].endsWith("B-NP")) {
-				if (isInPhrase) 
-					seq.add(entNode);
-				entNode = new Node(words[i], tags[i], "NP");
-				isInPhrase = true;
-			} else if (chunks[i].endsWith("I-NP")) {
-				if (entNode.word == null) {
-					entNode.word = words[i];
-					entNode.postag = tags[i];
-					entNode.label = "NP";
-				} else {
-					entNode.word += "_" + words[i];
-					entNode.postag += "_" + tags[i];
-				}
-				isInPhrase = true;
-			} else {
-				if (isInPhrase) 
-					seq.add(entNode);
-				seq.add(new Node(words[i], tags[i], "O"));
-				isInPhrase = false;
-			}
-		}
-		if (isInPhrase)
-			seq.add(entNode);
-		return seq;
-	}
-
 	public void run(File inFile, PrintStream outStream, String refFileName, Boolean isEvaluation) throws IOException {
 		// extraction
 		BufferedReader inputReader = new BufferedReader(new FileReader(inFile.getPath()));
@@ -158,31 +120,35 @@ public class Extractor {
 	        String[] tags = tagger.tag(whitespaceTokenizerLine);
 	        POSSample posSample = new POSSample(whitespaceTokenizerLine, tags);
 	        String[] words = posSample.getSentence();
-			//chunking
+
+	        //chunking
 	        String[] chunks = chunker.chunk(posSample.getSentence(), posSample.getTags());
 	        ChunkSample chunkSample = new ChunkSample(posSample.getSentence(), posSample.getTags(), chunks);
 	        Span[] spans = phrasesAsSpanList(chunkSample.getSentence(), chunkSample.getTags(), chunkSample.getPreds());
-	                  
+	        
+	        
+	        
+	        
 	        for (int i = 0; i < spans.length; i++) {
 	        	// ARG1
 	        	Node arg1 = null;
 	        	ArrayList<Node> leftContextOfARG1 = null;
 	        	if (spans[i].getType().equals("NP")) {
-	        		ArrayList<Node> seq = tokenizeString(words, tags, chunks, spans[i].getStart(), spans[i].getEnd());
+	        		ArrayList<Node> seq = FeatureFactory.tokenizeString(words, tags, chunks, spans[i].getStart(), spans[i].getEnd());
 	        		if (seq.size() == 1 && seq.get(0).postag.indexOf("NNP") >= 0) {
 	        			arg1 = seq.get(0); arg1.label = "ENT";
-	        			leftContextOfARG1 = tokenizeString(words, tags, chunks, spans[i].getStart()-2, spans[i].getStart());
+	        			leftContextOfARG1 = FeatureFactory.tokenizeString(words, tags, chunks, spans[i].getStart()-2, spans[i].getStart());
 	        			
 	    	        	for (int j = i+1; j < spans.length; j++) {
 	    	        		if (spans[j].getType().equals("NP")) {
 	    	        			// ARG2
-	    		        		ArrayList<Node> seq2 = tokenizeString(words, tags, chunks, spans[j].getStart(), spans[j].getEnd());
-	    		        		if (seq2.get(0).postag.indexOf("NNP") < 0) // ARG2 should be NNP 
-	    		        			continue;
+	    		        		ArrayList<Node> seq2 = FeatureFactory.tokenizeString(words, tags, chunks, spans[j].getStart(), spans[j].getEnd());
+	    		        		//if (seq2.get(0).postag.indexOf("NNP") < 0) // ARG2 should be NNP 
+	    		        		//	continue;
 	    		        		
 	    		        		Node arg2 = seq2.get(0); arg2.label = "ENT";
-	    		        		ArrayList<Node> rightContextOfARG2 = tokenizeString(words, tags, chunks, spans[j].getEnd(), spans[j].getEnd()+2);
-	    	        			ArrayList<Node> context = tokenizeString(words, tags, chunks, spans[i].getEnd(), spans[j].getStart());
+	    		        		ArrayList<Node> rightContextOfARG2 = FeatureFactory.tokenizeString(words, tags, chunks, spans[j].getEnd(), spans[j].getEnd()+2);
+	    	        			ArrayList<Node> context = FeatureFactory.tokenizeString(words, tags, chunks, spans[i].getEnd(), spans[j].getStart());
     	        				ArrayList<Node> instance = new ArrayList<Node>();
     	        				for (Node n : leftContextOfARG1) instance.add(n);
     	        				instance.add(arg1);
@@ -204,7 +170,7 @@ public class Extractor {
 
     	        				
     	        				ArrayList<Node> wordForm = new ArrayList<Node>();
-    	        				ArrayList<ArrayList<String>> featureForm = generateFeature(instance, wordForm);
+    	        				ArrayList<ArrayList<String>> featureForm = FeatureFactory.generateFeature(instance, wordForm);
     	        				String[] prediction = crf.predict(featureForm);
     	        				
     	        				// print out
@@ -326,232 +292,4 @@ public class Extractor {
         }
 
     }
-
-	public class Node {
-		public String word;
-		public String postag;
-		public String label;
-		
-		public String w;
-		public String p;
-		public String regex;
-		
-		public Node() {
-		}
-		
-		public Node(String w, String p, String l) {
-			word = w; postag = p; label = l;
-		}
-	}
-
-	public String[] beVerb = {"am", "are", "is", "was", "were", "be", "been", "being"};
-	
-	public ArrayList<ArrayList<String>> generateFeature(ArrayList<Node> sequence, ArrayList<Node> wordForm) {
-		ArrayList<ArrayList<String>> featureForm = new ArrayList<ArrayList<String>>();
-		
-		for (int i = 0; i < sequence.size(); i++) {
-			String label = sequence.get(i).label;
-			ArrayList<String> oneline = new ArrayList<String>();
-			// label
-			oneline.add(label);
-			
-			// current
-			Node cur = sequence.get(i);
-			String w = ""; String p = cur.postag;
-			if (label == "ENT" || label == "NP") {
-				p = "NP";
-			}
-			
-			oneline.add("p=" + p); // postag
-			if (!p.startsWith("N") && !p.startsWith("VB")) {
-				w = cur.word; 
-				oneline.add("w=" + w); // word (if not functional, e.g. Noun, Verb, Adverb
-			} else if (cur.postag.startsWith("VB")) {
-				for (String v : beVerb) {
-					if (v == w) {
-						w = "be";
-						oneline.add("w=" + w); // be verb
-						break;
-					}
-				}
-			}
-			
-			// lexical feature (regex)
-			if (w != "") {
-				for (String l : generateLexicalFeature(w)) {
-					oneline.add(l);
-					if (l.startsWith("regex="))
-						cur.regex = l.replace("regex=", "");
-				}
-			}
-			
-			featureForm.add(oneline);
-			cur.w = w; cur.p = p;		
-		}
-			
-		// surrounding feature
-		for (int i = 0; i < sequence.size(); i++) {
-			ArrayList<String> oneline = featureForm.get(i);
-			Node cur = sequence.get(i);
-			String w = cur.w, p = cur.p;
-			
-			// window (prev)
-			if (i > 0) {
-				Node p1 = sequence.get(i-1);
-				oneline.add("p-1=" + p1.p);
-				oneline.add("p-1&p=" + p1.p +"&"+ p);
-				if (w != "")
-					oneline.add("p-1&w=" + p1.p +"&"+ w);
-				if (p1.w != "") {
-					oneline.add("w-1=" + p1.w);
-					if (w != "")
-						oneline.add("w-1&w=" + p1.w +"&"+ w);
-					oneline.add("w-1&p" + p1.w +"&"+ p);
-				}
-				if (p1.regex != null)
-					oneline.add("regex-1=" + p1.regex);
-				if (i > 1) {
-					Node p2 = sequence.get(i-2);
-					oneline.add("p-2=" + p2.p);
-					oneline.add("p-2&p-1=" + p2.p +"&"+ p1.p);
-					oneline.add("p-2&p-1&p=" + p2.p +"&"+ p1.p + "&" + p);
-					if (w != "")
-						oneline.add("p-2&p-1&w=" + p2.p +"&"+ p1.p + "&" + w);
-					if (p2.w != "") {
-						oneline.add("w-2=" + p2.w);
-					}
-					if (p2.regex != null)
-						oneline.add("regex-2=" + p2.regex);
-					if (i > 2) {
-						Node p3 = sequence.get(i-3);
-						oneline.add("p-3=" + p3.p);
-						oneline.add("p-3&p-2=" + p3.p +"&"+ p2.p);
-						oneline.add("p-3&p-2&p-1=" + p3.p +"&"+ p2.p +"&"+ p1.p);
-						oneline.add("p-3&p-2&p-1&p=" + p3.p +"&"+ p2.p +"&"+ p1.p +"&"+ p);
-						if (w != "")
-							oneline.add("p-3&p-2&p-1&w=" + p3.p +"&"+ p2.p +"&"+ p1.p +"&"+ w);
-						if (p3.w != "") {
-							oneline.add("w-3=" + p3.w);
-						}
-						if (p3.regex != null)
-							oneline.add("regex-3=" + p3.regex);
-					}
-				}
-			}
-			
-			// window (next)
-			if (i < sequence.size() - 1) {
-				Node p1 = sequence.get(i+1);
-				oneline.add("p+1=" + p1.p);
-				oneline.add("p&p+1=" + p +"&"+ p1.p);
-				if (w != "")
-					oneline.add("w&p+1=" + w + "&"+ p1.p);
-				if (p1.w != "") {
-					oneline.add("w+1=" + p1.w);
-					if (w != "")
-						oneline.add("w&w+1=" + w +"&"+ p1.w);
-					oneline.add("p&w+1" + p +"&"+ p1.w);
-				}
-				if (p1.regex != null)
-					oneline.add("regex+1=" + p1.regex);
-				if (i < sequence.size() - 2) {
-					Node p2 = sequence.get(i+2);
-					oneline.add("p+2=" + p2.p);
-					oneline.add("p+1&p+2=" + p1.p +"&"+ p2.p);
-					oneline.add("p&p+1&p+2=" + p +"&"+ p1.p +"&"+ p2.p);
-					if (w != "")
-						oneline.add("w&p+1&p+2" + w +"&"+ p1.p +"&"+ p2.p);
-					if (p2.w != "") {
-						oneline.add("w+2=" + p2.w);
-					}
-					if (p2.regex != null)
-						oneline.add("regex+2=" + p2.regex);
-					if (i < sequence.size() - 3) {
-						Node p3 = sequence.get(i+3);
-						oneline.add("p+3=" + p3.p);
-						oneline.add("p+2&p+3=" + p2.p +"&"+ p3.p);
-						oneline.add("p+1&p+2&p+3=" + p1.p +"&"+ p2.p +"&"+ p3.p);
-						oneline.add("p&p+1&p+2&p+3=" + p +"&"+ p1.p +"&"+ p2.p +"&"+ p3.p);
-						if (w != "")
-							oneline.add("w&p+1&p2&p+3" + w +"&"+ p1.p +"&"+ p2.p +"&"+ p3.p);
-						if (p3.w != "") {
-							oneline.add("w+3=" + p3.w);
-						}
-						if (p3.regex != null)
-							oneline.add("regex+3=" + p3.regex);
-					}
-				}
-			}
-			
-		}
-		
-		// filter
-		ArrayList<ArrayList<String>> ret = new ArrayList<ArrayList<String>>();
-		//ArrayList<Node> newSequence = new ArrayList<Node>();
-		int entNumber = 0;
-		for (int i = 0; i < featureForm.size(); i++) {
-			ArrayList<String> oneline = featureForm.get(i);
-			if (oneline.get(0).equals("ENT")) {
-				entNumber++;
-			}
-			if (entNumber > 0) {
-				ret.add(oneline);
-				wordForm.add(sequence.get(i));
-			}
-			if (entNumber > 1 && oneline.get(0).equals("ENT")) {
-				break;
-			}
-		}
-		
-		///sequence = newSequence;
-		return ret;
-	}
-	
-	public ArrayList<String> generateLexicalFeature(String w) {
-		ArrayList<String> feature = new ArrayList<String>();
-		
-        Pattern upperCasePattern = Pattern.compile("[A-Z][A-Z]*");
-        Matcher upperCaseMatcher = upperCasePattern.matcher(w);
-        String output1 = upperCaseMatcher.replaceAll("A");
-        
-        Pattern lowerCasePattern = Pattern.compile("[a-z][a-z]*");
-        Matcher lowerCaseMatcher = lowerCasePattern.matcher(output1);
-        String output2 = lowerCaseMatcher.replaceAll("a");
-        
-        Pattern digitPattern = Pattern.compile("[0-9][0-9]*");
-        Matcher digitMatcher = digitPattern.matcher(output2);
-        String output3 = digitMatcher.replaceAll("0");
-        
-        Pattern puncPattern = Pattern.compile("\\p{P}\\p{P}*");
-        Matcher puncMatcher = puncPattern.matcher(output3);
-        String output4 = puncMatcher.replaceAll(".");
-        
-        
-        feature.add("regex=" + output4);
-        if (output4.equals("A"))
-        	feature.add("lex:allCapital=true");
-        else if (output4.startsWith("A")) 
-        	feature.add("lex:beginCapital=true");
-        else if (output4.indexOf('A') >= 0)
-        	feature.add("lex:containCapital=true");
-        
-        if (output4.equals("0"))
-        	feature.add("lex:allDigit=true");
-        else if (output4.startsWith("0")) 
-        	feature.add("lex:beginDigit=true");
-        else if (output4.indexOf('0') >= 0)
-        	feature.add("lex:containDigit=true");
-
-        if (output4.equals("."))
-        	feature.add("lex:allPunc=true");
-        else if (output4.startsWith(".")) 
-        	feature.add("lex:beginPunc=true");
-        else if (output4.indexOf('.') >= 0)
-        	feature.add("lex:containPunc=true");
-        
-        if (output4.replace('A', ' ').replace('a', ' ').replace('0', ' ').replace('.', ' ').trim().length() > 0)
-        	feature.add("lex:containOtherChar=true");
-        
-		return feature;
-	}
 }
