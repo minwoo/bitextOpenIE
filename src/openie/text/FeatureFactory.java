@@ -172,8 +172,6 @@ public class FeatureFactory {
 		return feature;
 	}	
 	
-	public static String[] beVerb = {"am", "are", "is", "was", "were", "be", "been", "being", "have", "had", "has", "having"};
-	
 	@SuppressWarnings("unchecked")
 	public static ArrayList<ArrayList<String>> generateFeature(ArrayList<Node> sequence) {
 		ArrayList<ArrayList<String>> featureForm = new ArrayList<ArrayList<String>>();
@@ -190,38 +188,25 @@ public class FeatureFactory {
 			// current
 			Node cur = sequence.get(i);
 			String w = ""; String p = cur.postag;
-			if (label == "ENT" || label == "NP") {
-				p = "NP";
-//				if (cur.postag.indexOf('_') >= 0) {
-//					p = "NP";
-//				}
-//				if (cur.postag.indexOf("NNP") >= 0)
-//					oneline.add("containNNP");
-//				oneline.add("isARG");
-				if (label == "ENT")
-					p = "ENT";
-			}	
+			
+			if (label == "NP") {
+				if (cur.postag.equals("WDT")) {
+					w = cur.word;
+				} else
+					p = "NP";
+			} else if (label == "ENT")
+				p = "ENT";
 			features.add("p=" + p); // postag
 			
 			if (!p.startsWith("N") && !p.startsWith("VB") && !p.startsWith("ENT")) {
 				w = cur.word; 
 				features.add("w=" + w); // word (if not functional, e.g. Noun, Verb, Adverb
-			} else if (cur.postag.startsWith("VB")) {
-				WordTag wt = Morphology.stemStatic(cur.word, cur.postag);
-				w = wt.word();
-				features.add("w=" + w); 
-//				for (String v : beVerb) {
-//					if (v.equals(cur.word)) {
-//						//w = "be";
-//						w = cur.word;
-//						oneline.add("w=" + w); // be verb
-//						break;
-//					}
-//				}
-			} else if (cur.postag.equals("WDT")) {
-				w = cur.word;
-				features.add("w=" + w); 
 			} 
+//			else if (cur.postag.startsWith("VB")) {
+//				WordTag wt = Morphology.stemStatic(cur.word, cur.postag);
+//				w = wt.word();
+//				features.add("w=" + w); 
+//			} 
 						
 			// lexical feature (regex)
 //			if (cur.label == "ENT" || cur.label == "NP") {
@@ -250,10 +235,8 @@ public class FeatureFactory {
 			ArrayList<String> features = null;
 			if (cur.label == "ENT" || cur.label == "NP") 
 				features = featureForm2.get(i);
-			else if (cur.postag.startsWith("VB") || cur.postag.equals("IN") || cur.postag.equals("TO"))
+			else //if (cur.postag.startsWith("VB") || cur.postag.equals("IN") || cur.postag.equals("TO"))
 				features = featureForm.get(i);
-			else
-				continue;
 			
 			// window (prev)
 			if (i > 0) {
@@ -412,8 +395,8 @@ public class FeatureFactory {
 			Node cur = sequence.get(i);
 			if (cur.label == "ENT" || cur.label == "NP")
 				continue;
-			if (!cur.postag.startsWith("VB") && !cur.postag.equals("IN") && !cur.postag.equals("TO"))
-				continue;
+			//if (!cur.postag.startsWith("VB") && !cur.postag.equals("IN") && !cur.postag.equals("TO"))
+			//	continue;
 			
 			//for (String f : entityFeat) {
 			//	features.add(cur.w + "|" + f);

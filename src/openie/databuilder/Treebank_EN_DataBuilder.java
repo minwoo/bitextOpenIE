@@ -42,8 +42,8 @@ public class Treebank_EN_DataBuilder {
 		line = line.replace("\\/", "\\\\");
 		
 		// left context of ARG1
-		String leftContextOfARG1 = line.substring(0, line.indexOf("<ARG1"));
-		FeatureFactory.tokenizeString(leftContextOfARG1, sequence);
+		//String leftContextOfARG1 = line.substring(0, line.indexOf("<ARG1"));
+		//FeatureFactory.tokenizeString(leftContextOfARG1, sequence);
 		// ARG1
 		String e1String = line.substring(line.indexOf("<ARG1"), line.indexOf("</ARG1>"));
 		e1String = e1String.substring(e1String.indexOf(">")+1);
@@ -57,9 +57,9 @@ public class Treebank_EN_DataBuilder {
 		e2String = e2String.substring(e2String.indexOf(">")+1);
 		FeatureFactory.tokenizeString(e2String, sequence, "ENT");
 		// right context of ARG2
-		String rightContextOfARG2 = line.substring(line.indexOf("</ARG2>"));
-		rightContextOfARG2 = rightContextOfARG2.substring(rightContextOfARG2.indexOf(">")+1);
-		FeatureFactory.tokenizeString(rightContextOfARG2, sequence);
+		//String rightContextOfARG2 = line.substring(line.indexOf("</ARG2>"));
+		//rightContextOfARG2 = rightContextOfARG2.substring(rightContextOfARG2.indexOf(">")+1);
+		//FeatureFactory.tokenizeString(rightContextOfARG2, sequence);
 		
 		/*
 		 * Filtering unexpected instances
@@ -170,7 +170,7 @@ public class Treebank_EN_DataBuilder {
 		
 		return true;
 	}
-	static int TEST_SET = 30;
+	static int TEST_SET = 0;
 	
 	public void run(String inputPath, String outputPath) throws IOException {
 		run(new File(inputPath), new File(outputPath));
@@ -196,7 +196,7 @@ public class Treebank_EN_DataBuilder {
         		// for testing
         		String[] fileToken = inFile.getPath().split("\\\\");
         		int section = Integer.parseInt(fileToken[fileToken.length-2]);
-        		if (section > 2)
+        		if (section > 1)
         			break;
         		
     			BufferedReader inputReader = new BufferedReader(new FileReader(inFile.getPath()));
