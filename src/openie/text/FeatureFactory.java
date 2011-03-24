@@ -432,10 +432,50 @@ public class FeatureFactory {
 				if (nNP.get(i) == numNP)
 					features.add("isNearestPP=true");
 			}
+			
+			// Bag-of-word features
+			generateBOW(sequence, i, features);
+			
 		}
 		// end of ENT1 & ENT2
 		
 		return featureForm;
+	}
+	
+	public static void generateBOW(ArrayList<Node> sequence, int index, ArrayList<String> features) {
+		for (int i = 0; i < sequence.size(); i++) {
+			if (i == index)
+				continue;
+			Node cur = sequence.get(i);
+			if (i < index) {
+				features.add("lbow="+cur.p);
+				if (cur.w != "") features.add("lbow="+cur.w);
+				if (i > 0) {
+					Node prev = sequence.get(i-1);
+					features.add("lbow="+cur.p+","+prev.p);
+					if (cur.w != "" && prev.w != "") features.add("lbow="+cur.w+","+prev.w);
+					if (i > 1) {
+						Node pprev = sequence.get(i-2);
+						features.add("lbow="+cur.p+","+prev.p+","+pprev.p);
+						if (cur.w != "" && prev.w != "" && pprev.w != "") features.add("lbow="+cur.w+","+prev.w+","+pprev.w);
+					}
+				}
+			} else {
+				features.add("rbow="+cur.p);
+				if (cur.w != "") features.add("rbow="+cur.w);
+				if (i < sequence.size()-1) {
+					Node next = sequence.get(i+1);
+					features.add("rbow="+cur.p+","+next.p);
+					if (cur.w != "" && next.w != "") features.add("rbow="+cur.w+","+next.w);
+					if (i < sequence.size()-2) {
+						Node nnext = sequence.get(i+2);
+						features.add("rbow="+cur.p+","+next.p+","+nnext.p);
+						if (cur.w != "" && next.w != "" && nnext.w != "") features.add("rbow="+cur.w+","+next.w+","+nnext.w);
+					}
+				}
+			}
+		}
+		
 	}
 	
 	public static ArrayList<ArrayList<String>> generateFeature(ArrayList<Node> sequence, ArrayList<Node> wordForm) {
