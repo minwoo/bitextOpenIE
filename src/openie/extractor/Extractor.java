@@ -126,10 +126,10 @@ public class Extractor {
 			// processing argument marker
 			String arg1String = line.substring(line.indexOf("<p1>"), line.indexOf("</p1>"));
 			line = line.replace(arg1String+"</p1>", " ARG1 ");
-			arg1String = arg1String.substring(arg1String.indexOf(">")+1);
+			arg1String = arg1String.substring(arg1String.indexOf(">")+1).trim();
 			String arg2String = line.substring(line.indexOf("<p2>"), line.indexOf("</p2>"));
 			line = line.replace(arg2String+"</p2>", " ARG2 ");
-			arg2String = arg2String.substring(arg2String.indexOf(">")+1);
+			arg2String = arg2String.substring(arg2String.indexOf(">")+1).trim();
 			
 			// tokenizing
 	        //String whitespaceTokenizerLine[] = WhitespaceTokenizer.INSTANCE.tokenize(line);
