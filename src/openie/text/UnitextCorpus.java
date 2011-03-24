@@ -43,27 +43,27 @@ public class UnitextCorpus {
 		int npLabelId = labelDict.lookup("NP", true);
 		assert (entLabelId == 0);
 		assert (npLabelId == 1);
-		
-		Sequence oneSentence = new Sequence();
+
+		Sequence seq = new Sequence();
 		while ((line = br.readLine()) != null) {
 			if (line.startsWith("#"))
 				continue;
 			String[] tokens = line.trim().split(" ", -1);
 			if (tokens.length < 2) { // smth strange; len(blank line) = 1
-				if (oneSentence.size() > 0)
-					append(oneSentence);
-				oneSentence = new Sequence();
+				if (seq.size() > 0)
+					append(seq);
+				seq = new Sequence();
 				prev_label = "";
 				continue;
 			}
-			oneSentence.addElement(pack(tokens, isUpdate));
+			seq.addElement(pack(tokens, isUpdate));
 			// todo: refactoring the following code for making edge (transition) feature index
 //			if (prev_label != "" && isUpdate) 
 //				param.indexingEdge(tokens[0], prev_label, 1.0);
 //			prev_label = tokens[0];
 		}
-		if (oneSentence.size() > 0)
-			append(oneSentence);
+		if (seq.size() > 0)
+			append(seq);
 		
 		br.close(); fr.close();
 		param.makeEdgeIndex(isUpdate);

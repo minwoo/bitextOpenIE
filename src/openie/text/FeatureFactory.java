@@ -224,13 +224,15 @@ public class FeatureFactory {
 			} 
 						
 			// lexical feature (regex)
-			if (w != "") {
-				for (String l : generateLexicalFeature(w)) {
-					features.add(l);
-					if (l.startsWith("regex="))
-						cur.regex = l.replace("regex=", "");
-				}
-			}
+//			if (cur.label == "ENT" || cur.label == "NP") {
+//				if (w != "") {
+//					for (String l : generateLexicalFeature(w)) {
+//						features.add(l);
+//						if (l.startsWith("regex="))
+//							cur.regex = l.replace("regex=", "");
+//					}
+//				}
+//			}
 							
 			featureForm.add(features);
 			featureForm2.add((ArrayList<String>)features.clone());
@@ -264,7 +266,7 @@ public class FeatureFactory {
 					features.add("w-1=" + p1.w);
 					if (w != "")
 						features.add("w-1&w=" + p1.w +"&"+ w);
-					features.add("w-1&p" + p1.w +"&"+ p);
+					features.add("w-1&p=" + p1.w +"&"+ p);
 				}
 				if (p1.regex != null)
 					features.add("regex-1=" + p1.regex);
@@ -413,8 +415,10 @@ public class FeatureFactory {
 			if (!cur.postag.startsWith("VB") && !cur.postag.equals("IN") && !cur.postag.equals("TO"))
 				continue;
 			
-			for (String f : entityFeat) 
-				features.add(f);
+			//for (String f : entityFeat) {
+			//	features.add(cur.w + "|" + f);
+				//features.add("V" + nVerb.get(i) + "|" + f);
+			//}
 			if (numVerb == 0) 
 				features.add("noVerb");
 			else {
