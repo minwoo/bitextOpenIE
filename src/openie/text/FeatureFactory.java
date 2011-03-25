@@ -198,15 +198,16 @@ public class FeatureFactory {
 				p = "ENT";
 			features.add("p=" + p); // postag
 			
-			if (!p.startsWith("N") && !p.startsWith("VB") && !p.startsWith("ENT")) {
-				w = cur.word; 
-				features.add("w=" + w); // word (if not functional, e.g. Noun, Verb, Adverb
-			} 
-//			else if (cur.postag.startsWith("VB")) {
-//				WordTag wt = Morphology.stemStatic(cur.word, cur.postag);
-//				w = wt.word();
-//				features.add("w=" + w); 
+//			if (!p.startsWith("N") && !p.startsWith("VB") && !p.startsWith("ENT")) {
+//				w = cur.word; 
+//				features.add("w=" + w); // word (if not functional, e.g. Noun, Verb, Adverb
 //			} 
+//			else if (cur.postag.startsWith("VB")) {
+			if (cur.label != "ENT" && cur.label != "NP") {
+				WordTag wt = Morphology.stemStatic(cur.word, cur.postag);
+				w = wt.word();
+				features.add("w=" + w); 
+			} 
 						
 			// lexical feature (regex)
 //			if (cur.label == "ENT" || cur.label == "NP") {
@@ -434,7 +435,7 @@ public class FeatureFactory {
 			}
 			
 			// Bag-of-word features
-			generateBOW(sequence, i, features);
+			//generateBOW(sequence, i, features);
 			
 		}
 		// end of ENT1 & ENT2
