@@ -210,15 +210,15 @@ public class FeatureFactory {
 			} 
 						
 			// regex feature
-			if (cur.label == "ENT" || cur.label == "NP") {
-				if (w != "") {
-					for (String l : generateLexicalFeature(w)) {
-						features.add(l);
-						if (l.startsWith("regex="))
-							cur.regex = l.replace("regex=", "");
-					}
-				}
-			}
+//			if (cur.label == "ENT" || cur.label == "NP") {
+//				if (w != "") {
+//					for (String l : generateLexicalFeature(w)) {
+//						features.add(l);
+//						if (l.startsWith("regex="))
+//							cur.regex = l.replace("regex=", "");
+//					}
+//				}
+//			}
 							
 			featureForm.add(features);
 			featureForm2.add((ArrayList<String>)features.clone());
@@ -260,16 +260,16 @@ public class FeatureFactory {
 				if (i > 1) {
 					Node p2 = sequence.get(i-2);
 					features.add("p-2=" + p2.p);
-//					features.add("p-2&p-1=" + p2.p +"&"+ p1.p);
-//					features.add("p-2&p-1&p=" + p2.p +"&"+ p1.p + "&" + p);
+					features.add("p-2&p-1=" + p2.p +"&"+ p1.p);
+					features.add("p-2&p-1&p=" + p2.p +"&"+ p1.p + "&" + p);
 					if (w != "") 
 						features.add("p-2&p-1&w=" + p2.p +"&"+ p1.p + "&" + w);
 					if (p2.w != "") {
 						features.add("w-2=" + p2.w);
-//						features.add("w-2&p-1=" + p2.w + "&" + p1.p);
-//						features.add("w-2&p-1&p=" + p2.w + "&" + p1.p + "&" + p);
-//						if (p1.w != "") 
-//							features.add("w-2&w-1=" + p2.w + "&" + p1.w);
+						features.add("w-2&p-1=" + p2.w + "&" + p1.p);
+						features.add("w-2&p-1&p=" + p2.w + "&" + p1.p + "&" + p);
+						if (p1.w != "") 
+							features.add("w-2&w-1=" + p2.w + "&" + p1.w);
 					}
 //					if (p2.regex != null)
 //						features.add("regex-2=" + p2.regex);
@@ -277,19 +277,19 @@ public class FeatureFactory {
 					if (i > 2) {
 						Node p3 = sequence.get(i-3);
 						features.add("p-3=" + p3.p);
-//						features.add("p-3&p-2=" + p3.p +"&"+ p2.p);
-//						features.add("p-3&p-2&p-1=" + p3.p +"&"+ p2.p +"&"+ p1.p);
+						features.add("p-3&p-2=" + p3.p +"&"+ p2.p);
+						features.add("p-3&p-2&p-1=" + p3.p +"&"+ p2.p +"&"+ p1.p);
 						//features.add("p-3&p-2&p-1&p=" + p3.p +"&"+ p2.p +"&"+ p1.p +"&"+ p);
 						//if (w != "") 
 						//	oneline.add("p-3&p-2&p-1&w=" + p3.p +"&"+ p2.p +"&"+ p1.p +"&"+ w);
-//						if (p3.w != "") {
-//							features.add("w-3=" + p3.w);
+						if (p3.w != "") {
+							features.add("w-3=" + p3.w);
 							//if (p2.w != "")
 							//	oneline.add("w-3&w-2&p-1&p" + p3.w +"&"+ p2.w +"&"+ p1.p +"&"+ p);
 
-//						}
-//						if (p3.regex != null)
-//							features.add("regex-3=" + p3.regex);
+						}
+						if (p3.regex != null)
+							features.add("regex-3=" + p3.regex);
 					}
 				}
 			}
@@ -312,17 +312,17 @@ public class FeatureFactory {
 				if (i < sequence.size() - 2) {
 					Node p2 = sequence.get(i+2);
 					features.add("p+2=" + p2.p);
-//					features.add("p+1&p+2=" + p1.p +"&"+ p2.p);
-//					features.add("p&p+1&p+2=" + p +"&"+ p1.p +"&"+ p2.p);
-//					if (w != "")
-//						features.add("w&p+1&p+2" + w +"&"+ p1.p +"&"+ p2.p);
+					features.add("p+1&p+2=" + p1.p +"&"+ p2.p);
+					features.add("p&p+1&p+2=" + p +"&"+ p1.p +"&"+ p2.p);
+					if (w != "")
+						features.add("w&p+1&p+2" + w +"&"+ p1.p +"&"+ p2.p);
 					if (p2.w != "") {
 						features.add("w+2=" + p2.w);
-//						features.add("p+1&w+2=" + p1.p + "&" + p2.w);
-//						if (p1.w != "") 
-//							features.add("w+1&w+2=" + p1.w + "&" + p2.w);
-//						if (w != "")
-//							features.add("w&p+1&w+2=" + w + "&" + p1.p + "&" + p2.w);
+						features.add("p+1&w+2=" + p1.p + "&" + p2.w);
+						if (p1.w != "") 
+							features.add("w+1&w+2=" + p1.w + "&" + p2.w);
+						if (w != "")
+							features.add("w&p+1&w+2=" + w + "&" + p1.p + "&" + p2.w);
 						
 					}
 					if (p2.regex != null)
@@ -330,8 +330,8 @@ public class FeatureFactory {
 					if (i < sequence.size() - 3) {
 						Node p3 = sequence.get(i+3);
 						features.add("p+3=" + p3.p);
-//						features.add("p+2&p+3=" + p2.p +"&"+ p3.p);
-//						features.add("p+1&p+2&p+3=" + p1.p +"&"+ p2.p +"&"+ p3.p);
+						features.add("p+2&p+3=" + p2.p +"&"+ p3.p);
+						features.add("p+1&p+2&p+3=" + p1.p +"&"+ p2.p +"&"+ p3.p);
 						//features.add("p&p+1&p+2&p+3=" + p +"&"+ p1.p +"&"+ p2.p +"&"+ p3.p);
 						//if (w != "") {
 							//features.add("w&p+1&p2&p+3" + w +"&"+ p1.p +"&"+ p2.p +"&"+ p3.p);
