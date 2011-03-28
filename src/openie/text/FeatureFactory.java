@@ -209,7 +209,7 @@ public class FeatureFactory {
 				features.add("w=" + w); 
 			} 
 						
-			// lexical feature (regex)
+			// regex feature
 //			if (cur.label == "ENT" || cur.label == "NP") {
 //				if (w != "") {
 //					for (String l : generateLexicalFeature(w)) {
@@ -225,6 +225,10 @@ public class FeatureFactory {
 			cur.w = w; cur.p = p;	
 		}
 		// end of lexical features
+
+		
+		ArrayList<String> entityFeat = new ArrayList<String>();
+		int nEnt = 0;
 		
 		/*
 		 * Context features of current position
@@ -234,8 +238,10 @@ public class FeatureFactory {
 			String w = cur.w, p = cur.p;
 		
 			ArrayList<String> features = null;
-			if (cur.label == "ENT" || cur.label == "NP") 
+			if (cur.label == "ENT" || cur.label == "NP") {
 				features = featureForm2.get(i);
+				nEnt++;
+			}
 			else //if (cur.postag.startsWith("VB") || cur.postag.equals("IN") || cur.postag.equals("TO"))
 				features = featureForm.get(i);
 			
@@ -252,8 +258,13 @@ public class FeatureFactory {
 						features.add("w-1&w=" + p1.w +"&"+ w);
 					features.add("w-1&p=" + p1.w +"&"+ p);
 				}
-				if (p1.regex != null)
-					features.add("regex-1=" + p1.regex);
+//				if (p1.regex != null)
+//					features.add("regex-1=" + p1.regex);
+				if (cur.label == "ENT" && nEnt == 2) {
+					entityFeat.add("arg2_p-1="+p1.p);
+					if (p1.w != "") entityFeat.add("arg2_w-1="+p1.w);
+				}
+				
 				if (i > 1) {
 					Node p2 = sequence.get(i-2);
 					features.add("p-2=" + p2.p);
@@ -268,8 +279,18 @@ public class FeatureFactory {
 						if (p1.w != "") 
 							features.add("w-2&w-1=" + p2.w + "&" + p1.w);
 					}
-					if (p2.regex != null)
-						features.add("regex-2=" + p2.regex);
+//					if (p2.regex != null)
+//						features.add("regex-2=" + p2.regex);
+					if (cur.label == "ENT" && nEnt == 2) {
+						entityFeat.add("arg2_p-2="+p2.p);
+						if (p2.w != "") entityFeat.add("arg2_w-2="+p2.w);
+						entityFeat.add("arg2_p-2&p-1="+p2.p+"&"+p1.p);
+						if (p1.w != "") { 
+							entityFeat.add("arg2_p_2&w-1="+p2.p+"&"+p1.w);
+							if (p2.w != "") entityFeat.add("arg2_w_2&w-1="+p2.w+"&"+p1.w);
+						}
+					}
+					
 					if (i > 2) {
 						Node p3 = sequence.get(i-3);
 						features.add("p-3=" + p3.p);
@@ -349,8 +370,7 @@ public class FeatureFactory {
 		/*
 		 * Context features of ENT1 & ENT2 
 		 */
-		ArrayList<String> entityFeat = new ArrayList<String>();
-		int nEnt = 0;
+		nEnt = 0;
 		ArrayList<Integer> nVerb = new ArrayList<Integer>();
 		ArrayList<Integer> nNP = new ArrayList<Integer>();
 		int numVerb = 0; boolean inVP = false;
@@ -359,18 +379,17 @@ public class FeatureFactory {
 			ArrayList<String> features = featureForm2.get(i);
 			Node cur = sequence.get(i);
 			if (cur.label == "ENT") {
-				nEnt++;
-				
-				if (nEnt == 1) {
-					for (String f : features) 
-						if (f != "ENT" && f != "NP")
-							entityFeat.add("ent1_"+f);
-				}
-				if (nEnt == 2) {
-					for (String f : features) 
-						if (f != "ENT" && f != "NP")
-							entityFeat.add("ent2_"+f);	
-				}
+				nEnt++;	
+//				if (nEnt == 1) {
+//					for (String f : features) 
+//						if (f != "ENT" && f != "NP")
+//							entityFeat.add("ent1_"+f);
+//				}
+//				if (nEnt == 2) {
+//					for (String f : features) 
+//						if (f != "ENT" && f != "NP")
+//							entityFeat.add("ent2_"+f);	
+//				}
 			}
 			
 			if (nEnt > 0 && nEnt < 2) {
@@ -403,6 +422,12 @@ public class FeatureFactory {
 			//	features.add(cur.w + "|" + f);
 				//features.add("V" + nVerb.get(i) + "|" + f);
 			//}
+			
+			for (String f : entityFeat) {
+				features.add(cur.w + "+" + f);
+				features.add(cur.p + "+" + f);
+			}	
+			
 			if (numVerb == 0) 
 				features.add("noVerb");
 			else {

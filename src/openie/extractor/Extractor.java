@@ -163,16 +163,16 @@ public class Extractor {
 	        
 	        Node arg1Node = isReverseOrder ? new Node(arg2String, "NNP", "ENT") : new Node(arg1String, "NNP", "ENT");
 	        Node arg2Node = isReverseOrder ? new Node(arg1String, "NNP", "ENT") : new Node(arg2String, "NNP", "ENT");
-	        ArrayList<Node> leftContextOfARG1 = FeatureFactory.tokenizeString(words, tags, chunks, indexOfARG1-2, indexOfARG1);
-	        ArrayList<Node> rightContextOfARG2 = FeatureFactory.tokenizeString(words, tags, chunks, indexOfARG2+1, indexOfARG2+3);
+	        //ArrayList<Node> leftContextOfARG1 = FeatureFactory.tokenizeString(words, tags, chunks, indexOfARG1-2, indexOfARG1);
+	        //ArrayList<Node> rightContextOfARG2 = FeatureFactory.tokenizeString(words, tags, chunks, indexOfARG2+1, indexOfARG2+3);
 			ArrayList<Node> context = FeatureFactory.tokenizeString(words, tags, chunks, indexOfARG1+1, indexOfARG2);
 			
 			ArrayList<Node> instance = new ArrayList<Node>();
-			for (Node n : leftContextOfARG1) instance.add(n);
+			//for (Node n : leftContextOfARG1) instance.add(n);
 			instance.add(arg1Node);
 			for (Node n : context) instance.add(n);
 			instance.add(arg2Node);
-			for (Node n : rightContextOfARG2) instance.add(n);
+			//for (Node n : rightContextOfARG2) instance.add(n);
 	        
 			// filtering 
 			boolean unexpectedInstance = false;
@@ -332,13 +332,13 @@ public class Extractor {
 				entNumber++;
 				
 				if (entNumber == 1) {
-					buffer.append("<" + wordForm.get(k).word + ", ");
+					buffer.append("<" + wordForm.get(k).word + "; ");
 				} else if (entNumber == 2) {
 					if (npList.size() > 0) {
 						for (String np : npList)
-							relString.append("; " + np.replace("_", " "));
+							relString.append("| " + np.replace("_", " "));
 					}
-					buffer.append(relString.toString()+", ");
+					buffer.append(relString.toString()+"; ");
 					buffer.append(wordForm.get(k).word + "> ");
 				}
 				inPhrase = false;
