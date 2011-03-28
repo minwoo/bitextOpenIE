@@ -406,34 +406,34 @@ public class FeatureFactory {
 				//features.add("V" + nVerb.get(i) + "|" + f);
 			//}
 			
-			if (i < sequence.size()-2) {
-				Node p1 = sequence.get(sequence.size()-2);
-				features.add("arg2_p-1="+p1.p+"+"+cur.w);
-				features.add("arg2_p-1="+p1.p+"+"+cur.p);
-				if (p1.w != "") { 
-					features.add("arg2_w-1="+p1.w+"+"+cur.w);
-					features.add("arg2_w-1="+p1.w+"+"+cur.p);
-				}
-				if (i < sequence.size()-3) {
-					Node p2 = sequence.get(sequence.size()-3);
-					features.add("arg2_p-2="+p2.p+"+"+cur.w);
-					features.add("arg2_p-2="+p2.p+"+"+cur.p);
-					if (p2.w != "") {
-						features.add("arg2_w-2="+p2.w+"+"+cur.w);
-						features.add("arg2_w-2="+p2.w+"+"+cur.p);
-					}
-					features.add("arg2_p-2&p-1="+p2.p+"&"+p1.p+"+"+cur.w);
-					features.add("arg2_p-2&p-1="+p2.p+"&"+p1.p+"+"+cur.p);
-					if (p1.w != "") { 
-						features.add("arg2_p_2&w-1="+p2.p+"&"+p1.w+"+"+cur.w);
-						features.add("arg2_p_2&w-1="+p2.p+"&"+p1.w+"+"+cur.p);
-						if (p2.w != "") {
-							features.add("arg2_w_2&w-1="+p2.w+"&"+p1.w+"+"+cur.w);
-							features.add("arg2_w_2&w-1="+p2.w+"&"+p1.w+"+"+cur.p);
-						}
-					}	
-				}
-			}
+//			if (i < sequence.size()-2) {
+//				Node p1 = sequence.get(sequence.size()-2);
+//				features.add("arg2_p-1="+p1.p+"+"+cur.w);
+//				features.add("arg2_p-1="+p1.p+"+"+cur.p);
+//				if (p1.w != "") { 
+//					features.add("arg2_w-1="+p1.w+"+"+cur.w);
+//					features.add("arg2_w-1="+p1.w+"+"+cur.p);
+//				}
+//				if (i < sequence.size()-3) {
+//					Node p2 = sequence.get(sequence.size()-3);
+//					features.add("arg2_p-2="+p2.p+"+"+cur.w);
+//					features.add("arg2_p-2="+p2.p+"+"+cur.p);
+//					if (p2.w != "") {
+//						features.add("arg2_w-2="+p2.w+"+"+cur.w);
+//						features.add("arg2_w-2="+p2.w+"+"+cur.p);
+//					}
+//					features.add("arg2_p-2&p-1="+p2.p+"&"+p1.p+"+"+cur.w);
+//					features.add("arg2_p-2&p-1="+p2.p+"&"+p1.p+"+"+cur.p);
+//					if (p1.w != "") { 
+//						features.add("arg2_p_2&w-1="+p2.p+"&"+p1.w+"+"+cur.w);
+//						features.add("arg2_p_2&w-1="+p2.p+"&"+p1.w+"+"+cur.p);
+//						if (p2.w != "") {
+//							features.add("arg2_w_2&w-1="+p2.w+"&"+p1.w+"+"+cur.w);
+//							features.add("arg2_w_2&w-1="+p2.w+"&"+p1.w+"+"+cur.p);
+//						}
+//					}	
+//				}
+//			}
 			
 			if (numVerb == 0) 
 				features.add("noVerb");
