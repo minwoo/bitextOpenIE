@@ -183,7 +183,7 @@ public class Extractor {
 				else if (n.label == "NP")
 					nNP++;
 			}
-			if (context.size() > MAX_DISTANCE || nNP > MAX_NP || !inVerb) 
+			if (context.size() > MAX_DISTANCE || nNP > MAX_NP) 
 				unexpectedInstance = true;
 			
 			if (unexpectedInstance) {
@@ -196,17 +196,17 @@ public class Extractor {
 			ArrayList<ArrayList<String>> featureForm = FeatureFactory.generateFeature(instance, wordForm);
 			String[] prediction = crf.predict(featureForm);
 			for (int i = 0 ; i < prediction.length; i++)
-				System.out.print(wordForm.get(i).word+"/"+wordForm.get(i).postag+"/"+prediction[i] +" ");
-			System.out.println();
+				outStream.print(wordForm.get(i).word+"/"+wordForm.get(i).postag+"/"+prediction[i] +" ");
+			outStream.println();
 			// print out
 			String output = predictionToString(prediction, wordForm);
         	outStream.println(output + "\t" + rawSentence);
 
 			for (int x = 0; x < featureForm.size(); x++) {
 				ArrayList<String> oneline = featureForm.get(x);
-				System.out.println(prediction[x] + " " + wordForm.get(x).word + " " + oneline.toString());
+				outStream.println(prediction[x] + " " + wordForm.get(x).word + " " + oneline.toString());
 			}
-			System.out.println();
+			outStream.println();
 
 			
 //	        for (int i = 0; i < spans.length; i++) {

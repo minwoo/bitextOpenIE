@@ -9,7 +9,7 @@ import edu.stanford.nlp.ling.WordTag;
 import edu.stanford.nlp.process.Morphology;
 
 
-public class FeatureFactory {
+public class KoreanFeatureFactory {
 
 	public static class Node {
 		public String word;
@@ -201,13 +201,12 @@ public class FeatureFactory {
 			String w = ""; String p = cur.postag;
 			
 			if (label == "NP") {
-				if (cur.postag.equals("WDT")) {
-					w = cur.word;
-				} else
-					p = "NP";
-			} else if (label == "ENT")
+				p = "NP";
+			} else if (label == "ENT") {
 				p = "ENT";
+			}
 			features.add("p=" + p); // postag
+			
 			
 //			if (!p.startsWith("N") && !p.startsWith("VB") && !p.startsWith("ENT")) {
 //				w = cur.word; 
@@ -215,9 +214,9 @@ public class FeatureFactory {
 //			} 
 //			else if (cur.postag.startsWith("VB")) {
 			if (cur.label != "ENT" && cur.label != "NP") {
-				WordTag wt = Morphology.stemStatic(cur.word, cur.postag);
-				w = wt.word();
-				features.add("w=" + w); 
+//				WordTag wt = Morphology.stemStatic(cur.word, cur.postag);
+//				w = wt.word();
+				features.add("w=" + cur.word); 
 			} 
 						
 			// regex feature
@@ -386,7 +385,7 @@ public class FeatureFactory {
 //				}
 			}
 			
-			if (nEnt > 0 && nEnt < 2) {
+			if (nEnt > 0) {
 				if (cur.postag.startsWith("VB")) {
 					if (!inVP) {
 						numVerb++;
@@ -449,7 +448,7 @@ public class FeatureFactory {
 			if (numVerb == 0) 
 				features.add("noVerb");
 			else {
-				if (cur.postag.startsWith("VB"))
+				if (cur.postag.startsWith("V"))
 					features.add("nPrevV="+(nVerb.get(i)-1));
 				else
 					features.add("nPrevV="+nVerb.get(i));
@@ -462,11 +461,11 @@ public class FeatureFactory {
 				features.add("nNextNP="+(numNP - nNP.get(i)));
 			}
 			
-			if (cur.postag.startsWith("VB"))
+			if (cur.postag.startsWith("V"))
 				idNearestVB = i;
 			
 			// nearest verb and ARG
-			if (cur.postag.equals("IN") || cur.postag.equals("TO")) {
+			if (cur.postag.startsWith("E")) {
 				if (idNearestVB == 0) {
 					features.add("nearestVerb=NONE");
 				} else {
@@ -537,9 +536,6 @@ public class FeatureFactory {
 			if (entNumber > 0) {
 				ret.add(oneline);
 				wordForm.add(sequence.get(i));
-			}
-			if (entNumber > 1 && oneline.get(0).equals("ENT")) {
-				break;
 			}
 		}
 		
